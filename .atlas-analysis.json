@@ -1,0 +1,83 @@
+{
+  "projectType": "api-service",
+  "projectName": "Construction Backend API",
+  "projectDescription": "REST API for managing construction quotations and user authentication built with Express and MongoDB",
+  "theme": "aspen",
+  "primaryColor": "#E67E22",
+  "lightColor": "#F39C12",
+  "darkColor": "#D35400",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Authentication",
+            "pages": [
+              "auth/overview",
+              "auth/register",
+              "auth/login"
+            ]
+          },
+          {
+            "group": "Quotations",
+            "pages": [
+              "quotations/overview",
+              "quotations/create",
+              "quotations/retrieve"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/database-setup",
+              "guides/deployment",
+              "guides/error-handling"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Endpoints",
+            "pages": [
+              "api/users/register",
+              "api/users/login",
+              "api/quotations/list",
+              "api/quotations/create"
+            ]
+          },
+          {
+            "group": "Models",
+            "pages": [
+              "api/models/user",
+              "api/models/quotation"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "User registration and authentication with bcrypt password hashing",
+    "Create and manage construction quotations with nested sections and items",
+    "MongoDB Atlas integration with Mongoose ODM",
+    "RESTful API with Express.js",
+    "Pagination support for data retrieval"
+  ],
+  "publicApiSurface": [
+    "POST /api/user/register",
+    "POST /api/user/login",
+    "GET /api/quotation/quotations",
+    "POST /api/quotation/register/quotation"
+  ]
+}
