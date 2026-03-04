@@ -234,7 +234,7 @@ Each item object contains:
 ```javascript
 const getQuotations = async () => {
   try {
-    const response = await fetch('https://api.example.com/api/quotations', {
+    const response = await fetch('http://localhost:3000/api/quotations', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -278,7 +278,7 @@ import axios from 'axios';
 
 const fetchQuotations = async () => {
   try {
-    const response = await axios.get('https://api.example.com/api/quotations');
+    const response = await axios.get('http://localhost:3000/api/quotations');
     return response.data;
   } catch (error) {
     if (error.response) {
@@ -300,14 +300,14 @@ const fetchQuotations = async () => {
 ### Using cURL
 
 ```bash
-curl -X GET https://api.example.com/api/quotations \
+curl -X GET http://localhost:3000/api/quotations \
   -H "Content-Type: application/json"
 ```
 
 ### Using cURL with Pretty Print
 
 ```bash
-curl -X GET https://api.example.com/api/quotations \
+curl -X GET http://localhost:3000/api/quotations \
   -H "Content-Type: application/json" | json_pp
 ```
 

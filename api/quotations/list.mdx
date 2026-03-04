@@ -20,11 +20,11 @@ This endpoint does not accept query parameters. It returns all quotations in the
 <CodeGroup>
 
 ```bash cURL
-curl -X GET https://api.example.com/api/quotation/quotations
+curl -X GET http://localhost:3000/api/quotation/quotations
 ```
 
 ```javascript JavaScript
-const response = await fetch('https://api.example.com/api/quotation/quotations', {
+const response = await fetch('http://localhost:3000/api/quotation/quotations', {
   method: 'GET'
 });
 
@@ -34,7 +34,7 @@ const quotations = await response.json();
 ```python Python
 import requests
 
-url = 'https://api.example.com/api/quotation/quotations'
+url = 'http://localhost:3000/api/quotation/quotations'
 response = requests.get(url)
 quotations = response.json()
 ```

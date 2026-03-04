@@ -394,7 +394,7 @@ const createQuotation = async () => {
   };
 
   try {
-    const response = await fetch('https://api.example.com/api/quotations', {
+    const response = await fetch('http://localhost:3000/api/quotations', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -421,7 +421,7 @@ const createQuotation = async () => {
 ### Using cURL
 
 ```bash
-curl -X POST https://api.example.com/api/quotations \
+curl -X POST http://localhost:3000/api/quotations \
   -H "Content-Type: application/json" \
   -d '{
     "factory": "Construction Co. Factory A",
