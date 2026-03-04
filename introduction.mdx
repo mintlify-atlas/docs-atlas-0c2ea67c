@@ -1,0 +1,218 @@
+---
+title: Welcome to Construction Backend API
+description: A powerful REST API for managing construction quotations and user authentication
+---
+
+<div className="relative overflow-hidden bg-gradient-to-br from-[#E67E22] via-[#D35400] to-[#A04000] dark:from-[#D35400] dark:via-[#A04000] dark:to-[#7D3000] py-20">
+  <div className="absolute inset-0 bg-black/20 dark:bg-black/40"></div>
+  <div className="relative max-w-6xl mx-auto px-6 text-center">
+    <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
+      Construction Backend API
+    </h1>
+    <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto">
+      Build powerful construction management applications with our REST API for quotations, user authentication, and project management
+    </p>
+    <div className="flex flex-wrap gap-4 justify-center">
+      <a
+        href="/quickstart"
+        className="inline-flex items-center px-8 py-3.5 bg-white text-[#E67E22] font-semibold rounded-lg hover:bg-gray-100 transition-colors no-underline"
+      >
+        Get Started
+      </a>
+      <a
+        href="/api/users/register"
+        className="inline-flex items-center px-8 py-3.5 border-2 border-white/30 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors no-underline"
+      >
+        Explore API Reference
+      </a>
+    </div>
+  </div>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+    Quick Start
+  </h2>
+  <p className="text-base text-gray-600 dark:text-gray-400 mb-8">
+    Get up and running with the Construction Backend API in minutes
+  </p>
+
+  <Steps>
+    <Step title="Set up your environment">
+      Clone the repository and install dependencies:
+
+      ```bash
+      git clone https://github.com/GabrielsantiagoRamirez/construction-backend.git
+      cd construction-backend
+      npm install
+      ```
+    </Step>
+
+    <Step title="Configure MongoDB connection">
+      Create a `.env` file in the root directory:
+
+      ```bash
+      MONGO_URI=your_mongodb_connection_string
+      PORT=3000
+      ```
+
+      The API uses MongoDB Atlas for data storage. Make sure you have a MongoDB Atlas cluster ready.
+    </Step>
+
+    <Step title="Start the server">
+      Run the development server:
+
+      ```bash
+      npm run dev
+      ```
+
+      The API will be available at `http://localhost:3000`
+    </Step>
+
+    <Step title="Make your first API call">
+      Register a new user:
+
+      ```bash cURL
+      curl -X POST http://localhost:3000/api/user/register \
+        -H "Content-Type: application/json" \
+        -d '{
+          "document": "123456789",
+          "email": "user@example.com",
+          "password": "securePassword123",
+          "name": "John",
+          "last_name": "Doe",
+          "cellphone": "+1234567890",
+          "user_type": "admin"
+        }'
+      ```
+
+      <Accordion title="Example Response">
+        ```json
+        {
+          "message": "Usuario registrado correctamente",
+          "user": {
+            "_id": "507f1f77bcf86cd799439011",
+            "document": "123456789",
+            "email": "user@example.com",
+            "name": "John",
+            "last_name": "Doe",
+            "cellphone": "+1234567890",
+            "user_type": "admin"
+          }
+        }
+        ```
+      </Accordion>
+    </Step>
+  </Steps>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+    Core Features
+  </h2>
+  <p className="text-base text-gray-600 dark:text-gray-400 mb-8">
+    Everything you need to build construction management applications
+  </p>
+
+  <CardGroup cols={2}>
+    <Card
+      title="User Authentication"
+      icon="user-lock"
+      href="/auth/overview"
+    >
+      Secure user registration and login with bcrypt password hashing and MongoDB storage
+    </Card>
+    <Card
+      title="Quotation Management"
+      icon="file-invoice-dollar"
+      href="/quotations/overview"
+    >
+      Create and manage detailed construction quotations with nested sections and line items
+    </Card>
+    <Card
+      title="MongoDB Integration"
+      icon="database"
+      href="/guides/database-setup"
+    >
+      Seamless MongoDB Atlas integration with Mongoose ODM and pagination support
+    </Card>
+    <Card
+      title="RESTful API"
+      icon="code"
+      href="/api/users/register"
+    >
+      Clean, well-structured REST API endpoints built with Express.js
+    </Card>
+  </CardGroup>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+    Explore by Topic
+  </h2>
+  <p className="text-base text-gray-600 dark:text-gray-400 mb-8">
+    Dive deeper into specific areas of the API
+  </p>
+
+  <CardGroup cols={3}>
+    <Card
+      title="Authentication"
+      icon="shield-halved"
+      href="/auth/overview"
+    >
+      Learn about user registration, login, and password security
+    </Card>
+    <Card
+      title="Quotations"
+      icon="file-contract"
+      href="/quotations/overview"
+    >
+      Manage construction quotations with detailed pricing and sections
+    </Card>
+    <Card
+      title="Database Setup"
+      icon="server"
+      href="/guides/database-setup"
+    >
+      Configure MongoDB Atlas and understand the data models
+    </Card>
+    <Card
+      title="Deployment"
+      icon="rocket"
+      href="/guides/deployment"
+    >
+      Deploy your API to Vercel or other hosting platforms
+    </Card>
+    <Card
+      title="Error Handling"
+      icon="triangle-exclamation"
+      href="/guides/error-handling"
+    >
+      Handle API errors gracefully with proper status codes
+    </Card>
+    <Card
+      title="API Reference"
+      icon="book"
+      href="/api/users/register"
+    >
+      Complete reference for all endpoints and data models
+    </Card>
+  </CardGroup>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="rounded-2xl border border-gray-200 dark:border-[#27272a] bg-gray-50 dark:bg-[#1a1d27] p-8 md:p-12">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+      Ready to Build?
+    </h2>
+    <p className="text-lg text-gray-600 dark:text-gray-400 mb-6 max-w-2xl">
+      Start building your construction management application today with our comprehensive API documentation
+    </p>
+    <a
+      href="/quickstart"
+      className="inline-flex items-center px-8 py-3.5 bg-[#E67E22] text-white font-semibold rounded-lg hover:bg-[#D35400] transition-colors no-underline"
+    >
+      Get Started Now
+    </a>
+  </div>
+</div>

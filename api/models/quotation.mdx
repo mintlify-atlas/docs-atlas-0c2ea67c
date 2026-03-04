@@ -1,0 +1,380 @@
+---
+title: 'Quotation Model'
+description: 'Mongoose schema definition for construction quotations with nested sections and items'
+icon: 'file-invoice-dollar'
+---
+
+## Overview
+
+The Quotation model represents construction project quotations with a complex nested structure. It includes factory information, financial calculations, and a hierarchical organization of sections and items. This model is designed to handle detailed cost breakdowns for construction projects.
+
+## Schema Definition
+
+The Quotation model uses Mongoose with pagination support through the `mongoose-paginate-v2` plugin. It features nested subdocuments for sections and items.
+
+### Source Location
+
+`src/models/quotation.js`
+
+## Top-Level Fields
+
+<ParamField path="factory" type="String" required>
+  Name or identifier of the factory or manufacturing facility associated with the quotation.
+  
+  **Constraints:**
+  - Required: Yes
+</ParamField>
+
+<ParamField path="fix" type="String" required>
+  Fixed reference or identifier for the quotation.
+  
+  **Constraints:**
+  - Required: Yes
+</ParamField>
+
+<ParamField path="description_quotation" type="String" required>
+  Detailed description of the quotation, including project overview and scope.
+  
+  **Constraints:**
+  - Required: Yes
+</ParamField>
+
+<ParamField path="subtotal" type="Number" required>
+  Base cost before additional charges and taxes.
+  
+  **Constraints:**
+  - Required: Yes
+</ParamField>
+
+<ParamField path="unexpected" type="Number" required>
+  Contingency amount for unexpected costs or changes.
+  
+  **Constraints:**
+  - Required: Yes
+</ParamField>
+
+<ParamField path="iva" type="Number" required>
+  VAT (Value Added Tax) or IVA amount.
+  
+  **Constraints:**
+  - Required: Yes
+</ParamField>
+
+<ParamField path="administratitive" type="Number" required>
+  Administrative costs and overhead.
+  
+  **Constraints:**
+  - Required: Yes
+</ParamField>
+
+<ParamField path="utility" type="Number" required>
+  Profit margin or utility percentage.
+  
+  **Constraints:**
+  - Required: Yes
+</ParamField>
+
+<ParamField path="total_price" type="Number" required>
+  Final total price including all costs, fees, and taxes.
+  
+  **Constraints:**
+  - Required: Yes
+</ParamField>
+
+## Nested Structure
+
+### Sections Array
+
+<ParamField path="sections" type="Array<Object>">
+  Array of section objects representing different phases or areas of the construction project.
+  
+  <Expandable title="Section Object Structure">
+  
+  <ParamField path="sections[].description_sections" type="String" required>
+    Description of the construction section (e.g., "Foundation Work", "Electrical Installation").
+    
+    **Constraints:**
+    - Required: Yes
+  </ParamField>
+  
+  <ParamField path="sections[].section_price" type="Number" required>
+    Total price for this section, calculated from all items within it.
+    
+    **Constraints:**
+    - Required: Yes
+  </ParamField>
+  
+  <ParamField path="sections[].items" type="Array<Object>">
+    Array of individual work items or materials within this section.
+    
+    <Expandable title="Item Object Structure">
+    
+    <ParamField path="sections[].items[].item_name" type="String" required>
+      Name or title of the work item or material.
+      
+      **Constraints:**
+      - Required: Yes
+    </ParamField>
+    
+    <ParamField path="sections[].items[].item_description" type="String" required>
+      Detailed description of the item, including specifications.
+      
+      **Constraints:**
+      - Required: Yes
+    </ParamField>
+    
+    <ParamField path="sections[].items[].item_total" type="Number" required>
+      Total cost for this item (quantity × item_value).
+      
+      **Constraints:**
+      - Required: Yes
+    </ParamField>
+    
+    <ParamField path="sections[].items[].quantity" type="Number" required>
+      Quantity of units for this item.
+      
+      **Constraints:**
+      - Required: Yes
+    </ParamField>
+    
+    <ParamField path="sections[].items[].unity" type="String" required>
+      Unit of measurement (e.g., "m2", "kg", "unit", "hour").
+      
+      **Constraints:**
+      - Required: Yes
+    </ParamField>
+    
+    <ParamField path="sections[].items[].item_value" type="Number" required>
+      Unit price for a single item.
+      
+      **Constraints:**
+      - Required: Yes
+    </ParamField>
+    
+    </Expandable>
+  </ParamField>
+  
+  </Expandable>
+</ParamField>
+
+## Plugins
+
+### mongoose-paginate-v2
+
+The Quotation schema includes the `mongoose-paginate-v2` plugin for efficient pagination of quotation queries.
+
+**Enabled Methods:**
+- `Quotation.paginate(query, options)` - Paginated query with customizable page size and sorting
+
+## Example Document
+
+```json
+{
+  "_id": "507f1f77bcf86cd799439011",
+  "factory": "ABC Construction Factory",
+  "fix": "QT-2024-001",
+  "description_quotation": "Residential building renovation project",
+  "subtotal": 50000,
+  "unexpected": 5000,
+  "iva": 9500,
+  "administratitive": 3000,
+  "utility": 7500,
+  "total_price": 75000,
+  "sections": [
+    {
+      "description_sections": "Foundation and Structural Work",
+      "section_price": 25000,
+      "items": [
+        {
+          "item_name": "Concrete Pouring",
+          "item_description": "High-strength concrete for foundation",
+          "item_total": 15000,
+          "quantity": 50,
+          "unity": "m3",
+          "item_value": 300
+        },
+        {
+          "item_name": "Steel Reinforcement",
+          "item_description": "Rebar installation for structural support",
+          "item_total": 10000,
+          "quantity": 2000,
+          "unity": "kg",
+          "item_value": 5
+        }
+      ]
+    },
+    {
+      "description_sections": "Electrical Installation",
+      "section_price": 12000,
+      "items": [
+        {
+          "item_name": "Wiring",
+          "item_description": "Complete electrical wiring installation",
+          "item_total": 8000,
+          "quantity": 200,
+          "unity": "m",
+          "item_value": 40
+        },
+        {
+          "item_name": "Circuit Breakers",
+          "item_description": "Main and secondary circuit breakers",
+          "item_total": 4000,
+          "quantity": 10,
+          "unity": "unit",
+          "item_value": 400
+        }
+      ]
+    }
+  ],
+  "__v": 0
+}
+```
+
+## Validation Rules
+
+<Expandable title="Field Validation Details">
+
+### Required Fields at Top Level
+
+All top-level fields are required:
+- `factory`
+- `fix`
+- `description_quotation`
+- `subtotal`
+- `unexpected`
+- `iva`
+- `administratitive`
+- `utility`
+- `total_price`
+
+### Required Fields in Sections
+
+Each section object requires:
+- `description_sections`
+- `section_price`
+
+### Required Fields in Items
+
+Each item object requires:
+- `item_name`
+- `item_description`
+- `item_total`
+- `quantity`
+- `unity`
+- `item_value`
+
+<Note>
+All nested arrays (sections and items) allow empty arrays by default. Consider adding custom validation if at least one section or item is required for your business logic.
+</Note>
+
+</Expandable>
+
+## Hierarchical Structure
+
+The Quotation model follows a three-level hierarchy:
+
+```
+Quotation
+├── Top-level fields (factory, fix, prices, etc.)
+└── sections[] (Array)
+    ├── Section fields (description, price)
+    └── items[] (Array)
+        └── Item fields (name, description, quantity, unity, value, total)
+```
+
+## Usage Examples
+
+### Creating a New Quotation
+
+```javascript
+import Quotation from './models/quotation.js';
+
+const newQuotation = await Quotation.create({
+  factory: "XYZ Construction",
+  fix: "QT-2024-042",
+  description_quotation: "Office building renovation",
+  subtotal: 100000,
+  unexpected: 10000,
+  iva: 19000,
+  administratitive: 5000,
+  utility: 15000,
+  total_price: 149000,
+  sections: [
+    {
+      description_sections: "Plumbing Work",
+      section_price: 30000,
+      items: [
+        {
+          item_name: "Pipe Installation",
+          item_description: "PVC pipes for water supply",
+          item_total: 20000,
+          quantity: 100,
+          unity: "m",
+          item_value: 200
+        }
+      ]
+    }
+  ]
+});
+```
+
+### Querying with Pagination
+
+```javascript
+const options = {
+  page: 1,
+  limit: 10,
+  sort: { total_price: -1 }
+};
+
+const result = await Quotation.paginate(
+  { factory: "ABC Construction Factory" },
+  options
+);
+
+console.log(result.docs); // Array of quotation documents
+console.log(result.totalDocs); // Total number of quotations
+```
+
+### Accessing Nested Data
+
+```javascript
+const quotation = await Quotation.findById(quotationId);
+
+// Access sections
+quotation.sections.forEach(section => {
+  console.log(section.description_sections, section.section_price);
+  
+  // Access items within each section
+  section.items.forEach(item => {
+    console.log(item.item_name, item.quantity, item.unity);
+  });
+});
+```
+
+## Calculation Notes
+
+<Note>
+**Price Calculations**: The schema stores calculated values like `item_total`, `section_price`, and `total_price`. Ensure these are properly calculated before saving:
+
+- `item_total` = `quantity` × `item_value`
+- `section_price` = sum of all `item_total` in that section
+- `total_price` = `subtotal` + `unexpected` + `iva` + `administratitive` + `utility`
+
+Consider adding pre-save hooks to automatically calculate these values.
+</Note>
+
+<Note>
+**Typo Notice**: The field name `administratitive` appears to be a typo of "administrative". This is preserved from the source schema but should be noted for potential future refactoring.
+</Note>
+
+## Related Models
+
+- **User**: Quotations may be associated with users who created or are responsible for them
+
+## Best Practices
+
+1. **Data Consistency**: Always validate that calculated fields match the sum of their components
+2. **Nested Updates**: Use Mongoose subdocument methods when updating sections or items
+3. **Indexing**: Consider adding indexes on `factory` and `fix` fields for faster queries
+4. **Validation**: Implement custom validators to ensure at least one section exists in meaningful quotations

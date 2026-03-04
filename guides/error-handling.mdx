@@ -1,0 +1,621 @@
+---
+title: 'Error Handling'
+description: 'Comprehensive guide to error handling patterns and best practices in the Construction Backend API'
+---
+
+## Overview
+
+The Construction Backend API implements structured error handling patterns across all endpoints to ensure consistent, informative error responses. This guide documents the error handling strategies used throughout the application.
+
+## Error Response Structure
+
+All API errors follow a consistent JSON format:
+
+```json
+{
+  "message": "Human-readable error description",
+  "error": "Detailed error information (when available)"
+}
+```
+
+## HTTP Status Codes
+
+The API uses standard HTTP status codes to indicate request outcomes:
+
+| Status Code | Meaning | Use Case |
+|-------------|---------|----------|
+| `200` | OK | Successful request |
+| `201` | Created | Resource created successfully |
+| `400` | Bad Request | Invalid input or missing required fields |
+| `401` | Unauthorized | Authentication failed |
+| `500` | Internal Server Error | Server-side error occurred |
+
+## Error Handling Patterns
+
+### User Registration Errors
+
+The user registration endpoint implements multiple validation checks. From `src/controllers/userController.js:4-40`:
+
+```javascript src/controllers/userController.js
+const registerUser = async (req, res) => {
+  try {
+    const { document, email, password, name, last_name, cellphone, user_type } = req.body;
+
+    // Validation: Required fields
+    if (!email || !password) {
+      return res.status(400).json({ 
+        message: 'Email y contraseña son obligatorios' 
+      });
+    }
+
+    // Validation: Duplicate email
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ 
+        message: 'El correo electrónico ya está registrado' 
+      });
+    }
+
+    // Validation: Duplicate document
+    const existingDocument = await User.findOne({ document });
+    if (existingDocument) {
+      return res.status(400).json({ 
+        message: 'La cédula ya está registrada' 
+      });
+    }
+
+    // Hash password and create user
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({
+      document, email, password: hashedPassword,
+      name, last_name, cellphone, user_type
+    });
+
+    await newUser.save();
+    res.status(201).json({ 
+      message: 'Usuario registrado correctamente', 
+      user: newUser 
+    });
+    
+  } catch (error) {
+    console.error('Error al registrar el usuario:', error);
+    res.status(500).json({ 
+      message: 'Error al registrar el usuario', 
+      error: error.message 
+    });
+  }
+};
+```
+
+#### Registration Error Types
+
+<Tabs>
+  <Tab title="Missing Required Fields">
+    **Status Code:** `400 Bad Request`
+
+    **Trigger:** Email or password not provided
+
+    **Response:**
+    ```json
+    {
+      "message": "Email y contraseña son obligatorios"
+    }
+    ```
+
+    **Example Request:**
+    ```bash
+    curl -X POST https://api.example.com/api/user/register \
+      -H "Content-Type: application/json" \
+      -d '{"email": "user@example.com"}'
+    ```
+  </Tab>
+
+  <Tab title="Duplicate Email">
+    **Status Code:** `400 Bad Request`
+
+    **Trigger:** Email already exists in database
+
+    **Response:**
+    ```json
+    {
+      "message": "El correo electrónico ya está registrado"
+    }
+    ```
+
+    <Note>
+      This check happens at `src/controllers/userController.js:12-15`
+    </Note>
+  </Tab>
+
+  <Tab title="Duplicate Document">
+    **Status Code:** `400 Bad Request`
+
+    **Trigger:** Document ID already exists in database
+
+    **Response:**
+    ```json
+    {
+      "message": "La cédula ya está registrada"
+    }
+    ```
+
+    <Note>
+      This check happens at `src/controllers/userController.js:17-20`
+    </Note>
+  </Tab>
+
+  <Tab title="Server Error">
+    **Status Code:** `500 Internal Server Error`
+
+    **Trigger:** Database connection issues, unexpected errors
+
+    **Response:**
+    ```json
+    {
+      "message": "Error al registrar el usuario",
+      "error": "Specific error message"
+    }
+    ```
+
+    <Warning>
+      Server errors are logged to console at `src/controllers/userController.js:37`
+    </Warning>
+  </Tab>
+</Tabs>
+
+### User Login Errors
+
+The login endpoint implements authentication validation. From `src/controllers/userController.js:43-74`:
+
+```javascript src/controllers/userController.js
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validation: Required fields
+    if (!email || !password) {
+      return res.status(400).json({ 
+        message: 'Email y contraseña son obligatorios' 
+      });
+    }
+
+    // Validation: User exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ 
+        message: 'Usuario no encontrado con el email proporcionado' 
+      });
+    }
+
+    // Validation: Password correct
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ 
+        message: 'Credenciales inválidas' 
+      });
+    }
+
+    // Success response
+    const userInfo = {
+      document: user.document,
+      email: user.email,
+      name: user.name,
+      last_name: user.last_name,
+      cellphone: user.cellphone,
+      user_type: user.user_type,
+    };
+
+    res.status(200).json({ 
+      message: 'Usuario logueado correctamente', 
+      user: userInfo 
+    });
+    
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Error al iniciar sesión', 
+      error 
+    });
+  }
+};
+```
+
+#### Login Error Types
+
+| Error | Status | Message | Location |
+|-------|--------|---------|----------|
+| Missing credentials | `400` | Email y contraseña son obligatorios | Line 47-50 |
+| User not found | `401` | Usuario no encontrado con el email proporcionado | Line 52-55 |
+| Invalid password | `401` | Credenciales inválidas | Line 57-60 |
+| Server error | `500` | Error al iniciar sesión | Line 71-73 |
+
+<Info>
+  Notice the use of `401 Unauthorized` for authentication failures versus `400 Bad Request` for validation failures.
+</Info>
+
+### Quotation Errors
+
+The quotation endpoints handle data retrieval and creation errors. From `src/controllers/quotationController.js`:
+
+#### Get Quotations
+
+```javascript src/controllers/quotationController.js
+const getQuotations = async (req, res) => {
+  try {
+    const quotations = await Quotation.find();
+    res.json(quotations);
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Error al obtener cotizaciones', 
+      error 
+    });
+  }
+};
+```
+
+#### Register Quotation
+
+```javascript src/controllers/quotationController.js
+const registerQuotation = async (req, res) => {
+  try {
+    const data = req.body;
+
+    // Comprehensive validation
+    if (!data || !data.factory || !data.fix || 
+        !data.description_quotation || 
+        data.subtotal === undefined || 
+        data.unexpected === undefined || 
+        data.iva === undefined || 
+        data.administratitive === undefined || 
+        data.utility === undefined || 
+        data.total_price === undefined || 
+        !Array.isArray(data.sections)) {
+      return res.status(400).json({ 
+        error: "Formato de JSON inválido" 
+      });
+    }
+
+    const newQuotation = new Quotation(data);
+    await newQuotation.save();
+    
+    res.status(201).json({ 
+      message: 'Cotización almacenada correctamente', 
+      quotation: newQuotation 
+    });
+    
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Error al almacenar la cotización', 
+      error 
+    });
+  }
+};
+```
+
+<Warning>
+  The quotation validation at `src/controllers/quotationController.js:18-24` checks for multiple required fields. Ensure all fields are provided to avoid validation errors.
+</Warning>
+
+#### Quotation Error Types
+
+**Get Quotations:**
+- **Status:** `500`
+- **Message:** Error al obtener cotizaciones
+- **Cause:** Database query failure
+
+**Register Quotation:**
+- **Status:** `400` - Invalid JSON format (missing required fields)
+- **Status:** `500` - Database save failure
+
+## Database Connection Errors
+
+Database connection errors are handled at the connection level in `src/database/connection.js:4-23`:
+
+```javascript src/database/connection.js
+export const connectDB = async () => {
+  try {
+    await mongoose.connect(MONGO_URI);
+
+    mongoose.connection.on('connected', () => {
+      console.log('Connected to MongoDB Atlas');
+    });
+
+    mongoose.connection.on('error', (err) => {
+      console.error('MongoDB connection error:', err);
+    });
+
+    mongoose.connection.on('disconnected', () => {
+      console.log('Disconnected from MongoDB Atlas');
+    });
+
+  } catch (error) {
+    console.error('Error connecting to MongoDB Atlas:', error);
+  }
+};
+```
+
+### Connection Error Handling
+
+- **Initial connection error:** Logged to console but doesn't crash the app
+- **Runtime errors:** Handled by the `error` event listener
+- **Disconnection:** Logged via `disconnected` event listener
+
+<Tip>
+  Connection errors are logged but don't throw exceptions. This allows the application to start even if MongoDB is temporarily unavailable.
+</Tip>
+
+## Error Handling Best Practices
+
+<Steps>
+  <Step title="Always Use Try-Catch">
+    Wrap async operations in try-catch blocks to prevent unhandled promise rejections:
+
+    ```javascript
+    const myEndpoint = async (req, res) => {
+      try {
+        // Your code here
+      } catch (error) {
+        res.status(500).json({ message: 'Error message', error });
+      }
+    };
+    ```
+  </Step>
+
+  <Step title="Validate Early">
+    Check required fields and validate input before performing expensive operations:
+
+    ```javascript
+    // Good: Validate before database queries
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Required fields missing' });
+    }
+
+    // Then perform database operations
+    const user = await User.findOne({ email });
+    ```
+  </Step>
+
+  <Step title="Use Appropriate Status Codes">
+    - `400` for client input errors
+    - `401` for authentication failures
+    - `404` for resources not found
+    - `500` for server errors
+  </Step>
+
+  <Step title="Log Errors for Debugging">
+    Always log errors to console or monitoring service:
+
+    ```javascript
+    catch (error) {
+      console.error('Error context:', error);
+      res.status(500).json({ message: 'User-friendly message', error: error.message });
+    }
+    ```
+  </Step>
+
+  <Step title="Return Consistent Error Format">
+    Maintain consistent error response structure across all endpoints:
+
+    ```javascript
+    {
+      "message": "Human-readable error",
+      "error": "Technical details (optional)"
+    }
+    ```
+  </Step>
+</Steps>
+
+## Common Error Scenarios
+
+### Missing Environment Variables
+
+**Problem:** `MONGO_URI` is undefined
+
+**Solution:**
+```javascript src/database/config.js
+import dotenv from 'dotenv';
+dotenv.config();
+
+export const MONGO_URI = process.env.MONGO_URI;
+
+if (!MONGO_URI) {
+  console.error('MONGO_URI is not defined in environment variables');
+  process.exit(1);
+}
+```
+
+### Mongoose Validation Errors
+
+**Problem:** Schema validation fails
+
+**Solution:** Handle Mongoose validation errors specifically:
+
+```javascript
+catch (error) {
+  if (error.name === 'ValidationError') {
+    return res.status(400).json({ 
+      message: 'Validation failed', 
+      errors: error.errors 
+    });
+  }
+  res.status(500).json({ message: 'Server error', error });
+}
+```
+
+### Duplicate Key Errors
+
+**Problem:** Unique constraint violation
+
+**Solution:**
+
+```javascript
+catch (error) {
+  if (error.code === 11000) {
+    return res.status(400).json({ 
+      message: 'Duplicate value detected', 
+      field: Object.keys(error.keyPattern)[0] 
+    });
+  }
+  res.status(500).json({ message: 'Server error', error });
+}
+```
+
+## Testing Error Scenarios
+
+### Test Missing Required Fields
+
+```bash
+curl -X POST http://localhost:3000/api/user/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com"}'
+```
+
+**Expected Response:**
+```json
+{
+  "message": "Email y contraseña son obligatorios"
+}
+```
+
+### Test Duplicate Email
+
+```bash
+# First request (should succeed)
+curl -X POST http://localhost:3000/api/user/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "password": "password123",
+    "document": "12345",
+    "name": "Test",
+    "last_name": "User",
+    "cellphone": "1234567890",
+    "user_type": "client"
+  }'
+
+# Second request with same email (should fail)
+curl -X POST http://localhost:3000/api/user/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "password": "password456",
+    "document": "67890",
+    "name": "Another",
+    "last_name": "User",
+    "cellphone": "0987654321",
+    "user_type": "admin"
+  }'
+```
+
+**Expected Response:**
+```json
+{
+  "message": "El correo electrónico ya está registrado"
+}
+```
+
+### Test Invalid Login
+
+```bash
+curl -X POST http://localhost:3000/api/user/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "nonexistent@example.com",
+    "password": "wrongpassword"
+  }'
+```
+
+**Expected Response:**
+```json
+{
+  "message": "Usuario no encontrado con el email proporcionado"
+}
+```
+
+## Monitoring and Debugging
+
+### Enable Detailed Error Logging
+
+For development, add detailed error logging:
+
+```javascript
+catch (error) {
+  console.error('Error details:', {
+    message: error.message,
+    stack: error.stack,
+    name: error.name,
+    code: error.code
+  });
+  res.status(500).json({ message: 'Error message', error: error.message });
+}
+```
+
+### Production Error Handling
+
+For production, avoid exposing error details:
+
+```javascript
+catch (error) {
+  console.error('Production error:', error);
+  
+  // Send generic message to client
+  res.status(500).json({ 
+    message: 'An error occurred processing your request' 
+  });
+  
+  // Log detailed error to monitoring service
+  // logToMonitoring(error);
+}
+```
+
+<Warning>
+  Never expose sensitive error details (stack traces, database errors) to clients in production.
+</Warning>
+
+## Security Considerations
+
+<Steps>
+  <Step title="Sanitize Error Messages">
+    Don't expose internal system details in error messages:
+    
+    ```javascript
+    // Bad: Exposes database structure
+    res.status(500).json({ error: error.stack });
+    
+    // Good: Generic message
+    res.status(500).json({ message: 'Processing error occurred' });
+    ```
+  </Step>
+
+  <Step title="Rate Limit Error Responses">
+    Implement rate limiting to prevent error-based attacks:
+    
+    ```javascript
+    // Prevent brute force on login errors
+    if (loginAttempts > 5) {
+      return res.status(429).json({ message: 'Too many attempts' });
+    }
+    ```
+  </Step>
+
+  <Step title="Validate All Input">
+    Always validate and sanitize user input before processing:
+    
+    ```javascript
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
+    ```
+  </Step>
+</Steps>
+
+## Summary
+
+The Construction Backend API implements comprehensive error handling:
+
+- **Consistent error response format** across all endpoints
+- **Appropriate HTTP status codes** (400, 401, 500)
+- **Early validation** to catch errors before expensive operations
+- **Detailed logging** for debugging while protecting sensitive information
+- **User-friendly messages** that guide clients to correct usage
+
+By following these patterns, you can build robust, maintainable API endpoints that handle errors gracefully and provide excellent developer experience.

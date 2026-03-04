@@ -1,0 +1,167 @@
+---
+title: 'User Model'
+description: 'Mongoose schema definition for User entity with authentication and profile information'
+icon: 'user'
+---
+
+## Overview
+
+The User model represents users in the construction backend system. It stores authentication credentials, personal information, and user role classification. The schema includes unique constraints on document and email fields to ensure data integrity.
+
+## Schema Definition
+
+The User model is built using Mongoose and includes pagination support through the `mongoose-paginate-v2` plugin.
+
+### Source Location
+
+`src/models/user.js`
+
+## Fields
+
+<ParamField path="document" type="String" required>
+  User's identification document number. Must be unique across all users.
+  
+  **Constraints:**
+  - Required: Yes
+  - Unique: Yes
+</ParamField>
+
+<ParamField path="email" type="String" required>
+  User's email address used for authentication and communication.
+  
+  **Constraints:**
+  - Required: Yes
+  - Unique: Yes
+</ParamField>
+
+<ParamField path="password" type="String" required>
+  Encrypted password for user authentication. Should be hashed before storage.
+  
+  **Constraints:**
+  - Required: Yes
+</ParamField>
+
+<ParamField path="name" type="String" required>
+  User's first name.
+  
+  **Constraints:**
+  - Required: Yes
+</ParamField>
+
+<ParamField path="last_name" type="String" required>
+  User's last name or surname.
+  
+  **Constraints:**
+  - Required: Yes
+</ParamField>
+
+<ParamField path="cellphone" type="String" required>
+  User's mobile phone number for contact purposes.
+  
+  **Constraints:**
+  - Required: Yes
+</ParamField>
+
+<ParamField path="user_type" type="String" required>
+  Classification or role of the user in the system (e.g., admin, client, contractor).
+  
+  **Constraints:**
+  - Required: Yes
+</ParamField>
+
+## Plugins
+
+### mongoose-paginate-v2
+
+The User schema includes the `mongoose-paginate-v2` plugin, which adds pagination capabilities to queries. This allows for efficient retrieval of large user datasets with built-in pagination methods.
+
+**Enabled Methods:**
+- `User.paginate(query, options)` - Paginated query with customizable page size and sorting
+
+## Example Document
+
+```json
+{
+  "_id": "507f1f77bcf86cd799439011",
+  "document": "1234567890",
+  "email": "john.doe@example.com",
+  "password": "$2b$10$XYZ...",
+  "name": "John",
+  "last_name": "Doe",
+  "cellphone": "+1234567890",
+  "user_type": "contractor",
+  "__v": 0
+}
+```
+
+## Validation Rules
+
+<Expandable title="Field Validation Details">
+
+### Required Fields
+All fields in the User schema are marked as required, meaning they must be provided when creating a new user document:
+- `document`
+- `email`
+- `password`
+- `name`
+- `last_name`
+- `cellphone`
+- `user_type`
+
+### Unique Constraints
+The following fields have unique constraints enforced at the database level:
+- **document**: Ensures no two users can have the same identification document
+- **email**: Ensures no two users can register with the same email address
+
+<Note>
+Attempting to create a user with a duplicate document or email will result in a MongoDB duplicate key error (E11000).
+</Note>
+
+</Expandable>
+
+## Usage Examples
+
+### Creating a New User
+
+```javascript
+import User from './models/user.js';
+
+const newUser = await User.create({
+  document: "1234567890",
+  email: "user@example.com",
+  password: hashedPassword,
+  name: "Jane",
+  last_name: "Smith",
+  cellphone: "+1987654321",
+  user_type: "client"
+});
+```
+
+### Querying with Pagination
+
+```javascript
+const options = {
+  page: 1,
+  limit: 10,
+  sort: { name: 1 }
+};
+
+const result = await User.paginate({ user_type: "contractor" }, options);
+console.log(result.docs); // Array of user documents
+console.log(result.totalDocs); // Total number of documents
+console.log(result.totalPages); // Total number of pages
+```
+
+## Related Models
+
+- **Quotation**: Users can be associated with quotations as creators or recipients
+
+## Notes
+
+<Note>
+**Security Consideration**: The password field should always be hashed using a secure algorithm (e.g., bcrypt) before storing in the database. Never store plain text passwords.
+</Note>
+
+<Note>
+**Email Validation**: Consider adding email format validation using Mongoose validators or a validation library to ensure valid email addresses are stored.
+</Note>

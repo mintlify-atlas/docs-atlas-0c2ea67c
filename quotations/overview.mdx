@@ -1,0 +1,162 @@
+---
+title: 'Quotations Overview'
+description: 'Understanding the quotations data structure and workflow'
+---
+
+## Introduction
+
+Quotations in the Construction Backend API allow you to manage detailed cost estimates for construction projects. Each quotation includes factory information, cost breakdowns, and nested sections with itemized pricing.
+
+## Data Structure
+
+The quotation model uses a hierarchical structure with three levels:
+
+<Steps>
+  <Step title="Quotation Level">
+    Contains factory details, fix reference, description, and overall cost calculations
+  </Step>
+  <Step title="Sections Level">
+    Groups related items together with section descriptions and subtotals
+  </Step>
+  <Step title="Items Level">
+    Individual line items with quantities, units, and pricing details
+  </Step>
+</Steps>
+
+## Schema Reference
+
+Based on the Mongoose schema defined in `src/models/quotation.js:8`:
+
+### Root Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `factory` | String | Yes | Factory or project identifier |
+| `fix` | String | Yes | Fix reference number |
+| `description_quotation` | String | Yes | Overall quotation description |
+| `subtotal` | Number | Yes | Subtotal before additional costs |
+| `unexpected` | Number | Yes | Unexpected costs or contingency |
+| `iva` | Number | Yes | VAT/IVA tax amount |
+| `administratitive` | Number | Yes | Administrative costs |
+| `utility` | Number | Yes | Utility or profit margin |
+| `total_price` | Number | Yes | Final total price |
+| `sections` | Array | Yes | Array of section objects |
+
+### Section Object
+
+Each section in the `sections` array contains:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `description_sections` | String | Yes | Description of the section |
+| `section_price` | Number | Yes | Total price for this section |
+| `items` | Array | Yes | Array of item objects |
+
+### Item Object
+
+Each item in the `items` array contains:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `item_name` | String | Yes | Name of the item |
+| `item_description` | String | Yes | Detailed item description |
+| `item_total` | Number | Yes | Total cost for this item |
+| `quantity` | Number | Yes | Quantity of items |
+| `unity` | String | Yes | Unit of measurement (e.g., "m2", "units", "kg") |
+| `item_value` | Number | Yes | Unit price per item |
+
+## Complete Schema Example
+
+<Expandable title="View complete quotation object structure">
+
+```json
+{
+  "factory": "ABC Construction Factory",
+  "fix": "FIX-2024-001",
+  "description_quotation": "Complete renovation of commercial building",
+  "subtotal": 50000.00,
+  "unexpected": 2500.00,
+  "iva": 9975.00,
+  "administratitive": 3000.00,
+  "utility": 5000.00,
+  "total_price": 70475.00,
+  "sections": [
+    {
+      "description_sections": "Foundation Work",
+      "section_price": 15000.00,
+      "items": [
+        {
+          "item_name": "Concrete Mix",
+          "item_description": "High-strength concrete for foundation",
+          "item_total": 8000.00,
+          "quantity": 20,
+          "unity": "m3",
+          "item_value": 400.00
+        },
+        {
+          "item_name": "Steel Reinforcement",
+          "item_description": "Rebar for foundation support",
+          "item_total": 7000.00,
+          "quantity": 1000,
+          "unity": "kg",
+          "item_value": 7.00
+        }
+      ]
+    },
+    {
+      "description_sections": "Electrical Installation",
+      "section_price": 12000.00,
+      "items": [
+        {
+          "item_name": "Electrical Wiring",
+          "item_description": "Commercial grade electrical cables",
+          "item_total": 5000.00,
+          "quantity": 500,
+          "unity": "meters",
+          "item_value": 10.00
+        },
+        {
+          "item_name": "Circuit Breakers",
+          "item_description": "Safety circuit breakers 20A",
+          "item_total": 7000.00,
+          "quantity": 35,
+          "unity": "units",
+          "item_value": 200.00
+        }
+      ]
+    }
+  ]
+}
+```
+
+</Expandable>
+
+## Cost Calculation
+
+<Note>
+  The `total_price` should represent the sum of `subtotal` + `unexpected` + `iva` + `administratitive` + `utility`. Ensure your calculations are accurate before submitting.
+</Note>
+
+## Validation Rules
+
+As seen in `src/controllers/quotationController.js:18-24`, the API validates:
+
+- All root-level fields must be present
+- `sections` must be an array
+- Numeric fields cannot be undefined (but can be 0)
+- All nested section and item fields must meet schema requirements
+
+<Warning>
+  Missing any required field will result in a `400 Bad Request` error with the message "Formato de JSON inválido".
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Create Quotation" icon="plus" href="/quotations/create">
+    Learn how to create a new quotation
+  </Card>
+  <Card title="Retrieve Quotations" icon="list" href="/quotations/retrieve">
+    Learn how to fetch quotations
+  </Card>
+</CardGroup>

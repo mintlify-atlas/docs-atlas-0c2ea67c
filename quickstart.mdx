@@ -1,80 +1,608 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get started with the Construction Backend API in minutes. Learn how to install, configure, and make your first API calls.
 ---
 
-## Get started in three steps
+## Overview
 
-Get your documentation site running locally and make your first customization.
+The Construction Backend API is a RESTful service built with Node.js, Express, and MongoDB. It provides endpoints for user authentication and quotation management for construction projects.
 
-### Step 1: Set up your local environment
+<Note>
+This guide will help you set up and run the API locally on your machine. Make sure you have Node.js 16+ and MongoDB Atlas account ready.
+</Note>
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+## Prerequisites
 
-### Step 2: Deploy your changes
+Before you begin, ensure you have the following installed:
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
+- Node.js (version 16 or higher)
+- npm or yarn package manager
+- MongoDB Atlas account (free tier available)
+- A code editor (VS Code recommended)
+
+## Installation
+
+<Steps>
+
+<Step title="Clone the repository">
+
+First, clone the repository to your local machine:
+
+```bash
+git clone <your-repository-url>
+cd construction_backend_mongo
+```
+
+</Step>
+
+<Step title="Install dependencies">
+
+Install all required npm packages:
+
+```bash
+npm install
+```
+
+This will install the following key dependencies:
+
+- `express` - Web framework
+- `mongoose` - MongoDB object modeling
+- `bcryptjs` - Password hashing
+- `cors` - Cross-origin resource sharing
+- `dotenv` - Environment variable management
+
+</Step>
+
+<Step title="Configure environment variables">
+
+Create a `.env` file in the root directory:
+
+```bash
+touch .env
+```
+
+Add your MongoDB connection string and port configuration:
+
+```bash
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>?retryWrites=true&w=majority
+PORT=3000
+```
+
+<Warning>
+Replace `<username>`, `<password>`, `<cluster>`, and `<database>` with your actual MongoDB Atlas credentials. Never commit your `.env` file to version control.
+</Warning>
+
+</Step>
+
+<Step title="Start the server">
+
+Run the development server with hot reload:
+
+```bash
+npm run dev
+```
+
+Or start the production server:
+
+```bash
+npm start
+```
+
+You should see the following output:
+
+```
+Bienvenido a Vidpher API
+MONGO_URI: mongodb+srv://...
+PORT: 3000
+Connected to MongoDB Atlas
+```
+
+</Step>
+
+</Steps>
+
+## Database connection
+
+The API uses Mongoose to connect to MongoDB Atlas. Here's how the connection is established:
+
+```javascript src/database/connection.js
+import mongoose from 'mongoose';
+import { MONGO_URI } from './config.js';
+
+export const connectDB = async () => {
+  try {
+    await mongoose.connect(MONGO_URI);
+
+    // Connection events
+    mongoose.connection.on('connected', () => {
+      console.log('Connected to MongoDB Atlas');
+    });
+
+    mongoose.connection.on('error', (err) => {
+      console.error('MongoDB connection error:', err);
+    });
+
+    mongoose.connection.on('disconnected', () => {
+      console.log('Disconnected from MongoDB Atlas');
+    });
+
+  } catch (error) {
+    console.error('Error connecting to MongoDB Atlas:', error);
+  }
+};
+```
+
+The connection configuration is loaded from environment variables:
+
+```javascript src/database/config.js
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+export const MONGO_URI = process.env.MONGO_URI;
+export const PORT = process.env.PORT || 3000;
+```
+
+## Your first API call
+
+Once the server is running, you can start making API calls. The API is available at `http://localhost:3000`.
+
+### Test the connection
+
+Verify the server is running:
+
+<CodeGroup>
+
+```bash cURL
+curl http://localhost:3000/ruta-prueba
+```
+
+```javascript JavaScript (Fetch)
+const response = await fetch('http://localhost:3000/ruta-prueba');
+const data = await response.json();
+console.log(data);
+```
+
+```python Python
+import requests
+
+response = requests.get('http://localhost:3000/ruta-prueba')
+print(response.json())
+```
+
+</CodeGroup>
+
+**Response:**
+
+```json
+{
+  "message": "Ruta de prueba"
+}
+```
+
+## User authentication
+
+### Register a new user
+
+Create a new user account:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST http://localhost:3000/api/user/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "document": "1234567890",
+    "email": "user@example.com",
+    "password": "securePassword123",
+    "name": "John",
+    "last_name": "Doe",
+    "cellphone": "+1234567890",
+    "user_type": "contractor"
+  }'
+```
+
+```javascript JavaScript (Fetch)
+const response = await fetch('http://localhost:3000/api/user/register', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    document: '1234567890',
+    email: 'user@example.com',
+    password: 'securePassword123',
+    name: 'John',
+    last_name: 'Doe',
+    cellphone: '+1234567890',
+    user_type: 'contractor'
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python Python
+import requests
+
+payload = {
+    "document": "1234567890",
+    "email": "user@example.com",
+    "password": "securePassword123",
+    "name": "John",
+    "last_name": "Doe",
+    "cellphone": "+1234567890",
+    "user_type": "contractor"
+}
+
+response = requests.post(
+    'http://localhost:3000/api/user/register',
+    json=payload
+)
+print(response.json())
+```
+
+</CodeGroup>
+
+**Response:**
+
+```json
+{
+  "message": "Usuario registrado correctamente",
+  "user": {
+    "document": "1234567890",
+    "email": "user@example.com",
+    "name": "John",
+    "last_name": "Doe",
+    "cellphone": "+1234567890",
+    "user_type": "contractor",
+    "_id": "507f1f77bcf86cd799439011"
+  }
+}
+```
+
+<Accordion title="User schema details">
+
+The user model includes the following fields:
+
+- `document` (String, required, unique) - User's identification document
+- `email` (String, required, unique) - User's email address
+- `password` (String, required) - Hashed password using bcryptjs
+- `name` (String, required) - User's first name
+- `last_name` (String, required) - User's last name
+- `cellphone` (String, required) - User's phone number
+- `user_type` (String, required) - Type of user (e.g., contractor, admin)
+
 </Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+### Login
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+Authenticate an existing user:
 
-### Step 3: Go live
+<CodeGroup>
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
+```bash cURL
+curl -X POST http://localhost:3000/api/user/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "securePassword123"
+  }'
+```
+
+```javascript JavaScript (Fetch)
+const response = await fetch('http://localhost:3000/api/user/login', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    email: 'user@example.com',
+    password: 'securePassword123'
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python Python
+import requests
+
+payload = {
+    "email": "user@example.com",
+    "password": "securePassword123"
+}
+
+response = requests.post(
+    'http://localhost:3000/api/user/login',
+    json=payload
+)
+print(response.json())
+```
+
+</CodeGroup>
+
+**Response:**
+
+```json
+{
+  "message": "Usuario logueado correctamente",
+  "user": {
+    "document": "1234567890",
+    "email": "user@example.com",
+    "name": "John",
+    "last_name": "Doe",
+    "cellphone": "+1234567890",
+    "user_type": "contractor"
+  }
+}
+```
+
+<Note>
+The password is never returned in responses. The API uses bcryptjs with a salt rounds of 10 for secure password hashing.
+</Note>
+
+## Quotation management
+
+### Create a quotation
+
+Create a new construction project quotation:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST http://localhost:3000/api/quotation/register/quotation \
+  -H "Content-Type: application/json" \
+  -d '{
+    "factory": "Main Construction Site",
+    "fix": "Building Renovation",
+    "description_quotation": "Complete office renovation including electrical and plumbing",
+    "subtotal": 50000,
+    "unexpected": 5000,
+    "iva": 7500,
+    "administratitive": 3000,
+    "utility": 8000,
+    "total_price": 73500,
+    "sections": [
+      {
+        "description_sections": "Electrical Work",
+        "section_price": 15000,
+        "items": [
+          {
+            "item_name": "Wiring Installation",
+            "item_description": "Install new electrical wiring throughout office",
+            "item_total": 10000,
+            "quantity": 100,
+            "unity": "meters",
+            "item_value": 100
+          }
+        ]
+      }
+    ]
+  }'
+```
+
+```javascript JavaScript (Fetch)
+const response = await fetch('http://localhost:3000/api/quotation/register/quotation', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    factory: 'Main Construction Site',
+    fix: 'Building Renovation',
+    description_quotation: 'Complete office renovation including electrical and plumbing',
+    subtotal: 50000,
+    unexpected: 5000,
+    iva: 7500,
+    administratitive: 3000,
+    utility: 8000,
+    total_price: 73500,
+    sections: [
+      {
+        description_sections: 'Electrical Work',
+        section_price: 15000,
+        items: [
+          {
+            item_name: 'Wiring Installation',
+            item_description: 'Install new electrical wiring throughout office',
+            item_total: 10000,
+            quantity: 100,
+            unity: 'meters',
+            item_value: 100
+          }
+        ]
+      }
+    ]
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python Python
+import requests
+
+payload = {
+    "factory": "Main Construction Site",
+    "fix": "Building Renovation",
+    "description_quotation": "Complete office renovation including electrical and plumbing",
+    "subtotal": 50000,
+    "unexpected": 5000,
+    "iva": 7500,
+    "administratitive": 3000,
+    "utility": 8000,
+    "total_price": 73500,
+    "sections": [
+        {
+            "description_sections": "Electrical Work",
+            "section_price": 15000,
+            "items": [
+                {
+                    "item_name": "Wiring Installation",
+                    "item_description": "Install new electrical wiring throughout office",
+                    "item_total": 10000,
+                    "quantity": 100,
+                    "unity": "meters",
+                    "item_value": 100
+                }
+            ]
+        }
+    ]
+}
+
+response = requests.post(
+    'http://localhost:3000/api/quotation/register/quotation',
+    json=payload
+)
+print(response.json())
+```
+
+</CodeGroup>
+
+**Response:**
+
+```json
+{
+  "message": "Cotización almacenada correctamente",
+  "quotation": {
+    "factory": "Main Construction Site",
+    "fix": "Building Renovation",
+    "description_quotation": "Complete office renovation including electrical and plumbing",
+    "subtotal": 50000,
+    "unexpected": 5000,
+    "iva": 7500,
+    "administratitive": 3000,
+    "utility": 8000,
+    "total_price": 73500,
+    "sections": [...],
+    "_id": "507f1f77bcf86cd799439012"
+  }
+}
+```
+
+### Get all quotations
+
+Retrieve all stored quotations:
+
+<CodeGroup>
+
+```bash cURL
+curl http://localhost:3000/api/quotation/quotations
+```
+
+```javascript JavaScript (Fetch)
+const response = await fetch('http://localhost:3000/api/quotation/quotations');
+const data = await response.json();
+console.log(data);
+```
+
+```python Python
+import requests
+
+response = requests.get('http://localhost:3000/api/quotation/quotations')
+print(response.json())
+```
+
+</CodeGroup>
+
+**Response:**
+
+```json
+[
+  {
+    "_id": "507f1f77bcf86cd799439012",
+    "factory": "Main Construction Site",
+    "fix": "Building Renovation",
+    "description_quotation": "Complete office renovation including electrical and plumbing",
+    "subtotal": 50000,
+    "unexpected": 5000,
+    "iva": 7500,
+    "administratitive": 3000,
+    "utility": 8000,
+    "total_price": 73500,
+    "sections": [...]
+  }
+]
+```
+
+<Accordion title="Quotation schema details">
+
+The quotation model includes the following structure:
+
+**Main fields:**
+- `factory` (String, required) - Factory or construction site name
+- `fix` (String, required) - Type of fix or construction work
+- `description_quotation` (String, required) - Overall quotation description
+- `subtotal` (Number, required) - Subtotal before taxes and fees
+- `unexpected` (Number, required) - Unexpected expenses buffer
+- `iva` (Number, required) - Tax amount (IVA)
+- `administratitive` (Number, required) - Administrative fees
+- `utility` (Number, required) - Profit margin
+- `total_price` (Number, required) - Final total price
+
+**Sections array:**
+- `description_sections` (String, required) - Section description
+- `section_price` (Number, required) - Total price for section
+
+**Items array (nested within sections):**
+- `item_name` (String, required) - Name of item
+- `item_description` (String, required) - Item description
+- `item_total` (Number, required) - Total cost for item
+- `quantity` (Number, required) - Quantity of items
+- `unity` (String, required) - Unit of measurement
+- `item_value` (Number, required) - Value per unit
+
 </Accordion>
+
+## API routes overview
+
+The API exposes the following routes:
+
+### User routes (`/api/user`)
+
+- `POST /api/user/register` - Register a new user
+- `POST /api/user/login` - Authenticate a user
+
+### Quotation routes (`/api/quotation`)
+
+- `GET /api/quotation/quotations` - Get all quotations
+- `POST /api/quotation/register/quotation` - Create a new quotation
+
+### Test route
+
+- `GET /ruta-prueba` - Health check endpoint
+
+## Error handling
+
+The API returns standard HTTP status codes:
+
+- `200` - Success
+- `201` - Resource created successfully
+- `400` - Bad request (validation error)
+- `401` - Unauthorized (authentication failed)
+- `500` - Internal server error
+
+Example error response:
+
+```json
+{
+  "message": "Email y contraseña son obligatorios"
+}
+```
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
+Now that you have the API running, you can:
 
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+- Explore the full API reference for detailed endpoint documentation
+- Learn about advanced MongoDB queries with Mongoose
+- Implement authentication tokens (JWT) for secure API access
+- Deploy your API to production using Vercel or other platforms
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+The API is configured to work with Vercel serverless functions. The `app` is exported as a module for serverless deployment.
 </Note>

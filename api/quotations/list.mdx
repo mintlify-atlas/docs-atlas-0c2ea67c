@@ -1,0 +1,242 @@
+---
+title: "List Quotations"
+description: "Retrieve all quotations stored in the Construction Backend API system"
+---
+
+## GET /api/quotation/quotations
+
+Retrieves a list of all quotations stored in the system. Each quotation includes factory information, pricing details, and itemized sections with construction items.
+
+### Headers
+
+No special headers required for this endpoint.
+
+### Query Parameters
+
+This endpoint does not accept query parameters. It returns all quotations in the system.
+
+### Request Example
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET https://api.example.com/api/quotation/quotations
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.example.com/api/quotation/quotations', {
+  method: 'GET'
+});
+
+const quotations = await response.json();
+```
+
+```python Python
+import requests
+
+url = 'https://api.example.com/api/quotation/quotations'
+response = requests.get(url)
+quotations = response.json()
+```
+
+</CodeGroup>
+
+### Response
+
+<Accordion title="200 - Success">
+
+Returns an array of quotation objects.
+
+<ResponseField name="quotations" type="array">
+  Array of quotation objects.
+
+  <ResponseField name="_id" type="string">
+    MongoDB generated quotation ID.
+  </ResponseField>
+
+  <ResponseField name="factory" type="string">
+    Factory or construction site name.
+  </ResponseField>
+
+  <ResponseField name="fix" type="string">
+    Fix or property identifier.
+  </ResponseField>
+
+  <ResponseField name="description_quotation" type="string">
+    General description of the quotation.
+  </ResponseField>
+
+  <ResponseField name="subtotal" type="number">
+    Subtotal amount before taxes and additional costs.
+  </ResponseField>
+
+  <ResponseField name="unexpected" type="number">
+    Unexpected costs or contingency amount.
+  </ResponseField>
+
+  <ResponseField name="iva" type="number">
+    IVA (Value Added Tax) amount.
+  </ResponseField>
+
+  <ResponseField name="administratitive" type="number">
+    Administrative costs.
+  </ResponseField>
+
+  <ResponseField name="utility" type="number">
+    Utility or profit margin amount.
+  </ResponseField>
+
+  <ResponseField name="total_price" type="number">
+    Total price including all costs and taxes.
+  </ResponseField>
+
+  <ResponseField name="sections" type="array">
+    Array of construction sections.
+
+    <ResponseField name="sections[].description_sections" type="string">
+      Description of the construction section.
+    </ResponseField>
+
+    <ResponseField name="sections[].section_price" type="number">
+      Total price for this section.
+    </ResponseField>
+
+    <ResponseField name="sections[].items" type="array">
+      Array of items within the section.
+
+      <ResponseField name="sections[].items[].item_name" type="string">
+        Name of the construction item.
+      </ResponseField>
+
+      <ResponseField name="sections[].items[].item_description" type="string">
+        Detailed description of the item.
+      </ResponseField>
+
+      <ResponseField name="sections[].items[].item_total" type="number">
+        Total cost for this item (quantity × unit value).
+      </ResponseField>
+
+      <ResponseField name="sections[].items[].quantity" type="number">
+        Quantity of items.
+      </ResponseField>
+
+      <ResponseField name="sections[].items[].unity" type="string">
+        Unit of measurement (e.g., "m2", "units", "kg").
+      </ResponseField>
+
+      <ResponseField name="sections[].items[].item_value" type="number">
+        Unit value/price per item.
+      </ResponseField>
+
+    </ResponseField>
+
+  </ResponseField>
+
+</ResponseField>
+
+```json Example Response
+[
+  {
+    "_id": "507f1f77bcf86cd799439011",
+    "factory": "Construction Site A",
+    "fix": "Building 1",
+    "description_quotation": "Complete construction quotation for residential building",
+    "subtotal": 50000000,
+    "unexpected": 2500000,
+    "iva": 9500000,
+    "administratitive": 3000000,
+    "utility": 5000000,
+    "total_price": 70000000,
+    "sections": [
+      {
+        "description_sections": "Foundation and Structure",
+        "section_price": 25000000,
+        "items": [
+          {
+            "item_name": "Concrete",
+            "item_description": "High-strength concrete for foundation",
+            "item_total": 15000000,
+            "quantity": 100,
+            "unity": "m3",
+            "item_value": 150000
+          },
+          {
+            "item_name": "Steel Rebar",
+            "item_description": "Reinforcement steel bars",
+            "item_total": 10000000,
+            "quantity": 5000,
+            "unity": "kg",
+            "item_value": 2000
+          }
+        ]
+      },
+      {
+        "description_sections": "Walls and Finishes",
+        "section_price": 25000000,
+        "items": [
+          {
+            "item_name": "Brick",
+            "item_description": "Standard construction brick",
+            "item_total": 12000000,
+            "quantity": 20000,
+            "unity": "units",
+            "item_value": 600
+          },
+          {
+            "item_name": "Paint",
+            "item_description": "Interior wall paint",
+            "item_total": 5000000,
+            "quantity": 500,
+            "unity": "m2",
+            "item_value": 10000
+          }
+        ]
+      }
+    ]
+  }
+]
+```
+
+</Accordion>
+
+<Accordion title="500 - Internal Server Error">
+
+Returned when an error occurs while retrieving quotations from the database.
+
+<ResponseField name="message" type="string">
+  Error message.
+</ResponseField>
+
+<ResponseField name="error" type="object">
+  Error details object.
+</ResponseField>
+
+```json Example Response
+{
+  "message": "Error al obtener cotizaciones",
+  "error": {}
+}
+```
+
+</Accordion>
+
+### Response Structure
+
+The endpoint returns a flat array of quotations. Each quotation contains:
+
+- **Top-level pricing**: Overall costs, taxes, and totals
+- **Sections**: Major construction divisions (e.g., foundation, walls, electrical)
+- **Items**: Specific materials or work items within each section
+
+### Use Cases
+
+- Viewing all quotations for a construction company
+- Generating reports on pending or active quotations
+- Analyzing pricing across multiple projects
+- Exporting quotation data for external systems
+
+### Implementation Reference
+
+The list quotations endpoint is implemented in:
+- Route: `/home/daytona/workspace/source/src/routes/quotationRoutes.js:8`
+- Controller: `/home/daytona/workspace/source/src/controllers/quotationController.js:4`

@@ -1,0 +1,263 @@
+---
+title: 'Database Setup'
+description: 'Complete guide to setting up MongoDB Atlas for the Construction Backend API'
+---
+
+## Overview
+
+The Construction Backend API uses MongoDB Atlas as its database solution. This guide walks you through setting up your database connection and configuring it properly for development and production environments.
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- A MongoDB Atlas account (create one at [mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas))
+- Node.js installed (v14 or higher)
+- Access to your project's environment variables
+
+## Database Connection Architecture
+
+The API uses Mongoose ODM to manage MongoDB connections. The connection is established in `src/database/connection.js:4-23` and includes automatic event handling for connection lifecycle management.
+
+<Steps>
+  <Step title="Create MongoDB Atlas Cluster">
+    1. Log in to your MongoDB Atlas account
+    2. Click "Build a Database"
+    3. Choose your preferred cluster tier (M0 Free Tier works for development)
+    4. Select your cloud provider and region
+    5. Name your cluster (e.g., "Construction")
+    6. Click "Create Cluster"
+  </Step>
+
+  <Step title="Configure Database Access">
+    1. Navigate to "Database Access" in the left sidebar
+    2. Click "Add New Database User"
+    3. Choose authentication method (Password recommended)
+    4. Create username and secure password
+    5. Set user privileges (Read and Write to any database for development)
+    6. Click "Add User"
+
+    <Warning>
+      Never commit database credentials to version control. Always use environment variables.
+    </Warning>
+  </Step>
+
+  <Step title="Configure Network Access">
+    1. Navigate to "Network Access" in the left sidebar
+    2. Click "Add IP Address"
+    3. For development: Click "Allow Access from Anywhere" (0.0.0.0/0)
+    4. For production: Add specific IP addresses or ranges
+    5. Click "Confirm"
+
+    <Note>
+      For production deployments on Vercel, use 0.0.0.0/0 as Vercel uses dynamic IPs, or configure Vercel's IP ranges if available.
+    </Note>
+  </Step>
+
+  <Step title="Get Connection String">
+    1. Navigate to "Database" in the left sidebar
+    2. Click "Connect" on your cluster
+    3. Choose "Connect your application"
+    4. Select "Node.js" driver and version 4.1 or later
+    5. Copy the connection string
+    6. Replace `<password>` with your database user password
+    7. Replace `<dbname>` with your database name (or remove it to use the default)
+
+    Your connection string should look like:
+    ```
+    mongodb+srv://<username>:<password>@construction.uhha3.mongodb.net/?retryWrites=true&w=majority&appName=Construction
+    ```
+  </Step>
+</Steps>
+
+## Environment Configuration
+
+The API uses `dotenv` to manage environment variables. The database configuration is loaded from `src/database/config.js:1-11`.
+
+### Create Environment File
+
+Create a `.env` file in your project root:
+
+```bash .env
+MONGO_URI=mongodb+srv://your-username:your-password@construction.uhha3.mongodb.net/?retryWrites=true&w=majority&appName=Construction
+PORT=3000
+```
+
+<Info>
+  The `PORT` variable defaults to 3000 if not specified. Vercel automatically sets this for production deployments.
+</Info>
+
+### Required Environment Variables
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|--------|
+| `MONGO_URI` | MongoDB Atlas connection string | Yes | None |
+| `PORT` | Server port number | No | 3000 |
+
+## Connection Implementation
+
+The database connection is initialized when the application starts. Here's how it works:
+
+```javascript src/database/connection.js
+import mongoose from 'mongoose';
+import { MONGO_URI } from './config.js';
+
+export const connectDB = async () => {
+  try {
+    await mongoose.connect(MONGO_URI);
+
+    // Connection event handlers
+    mongoose.connection.on('connected', () => {
+      console.log('Connected to MongoDB Atlas');
+    });
+
+    mongoose.connection.on('error', (err) => {
+      console.error('MongoDB connection error:', err);
+    });
+
+    mongoose.connection.on('disconnected', () => {
+      console.log('Disconnected from MongoDB Atlas');
+    });
+
+  } catch (error) {
+    console.error('Error connecting to MongoDB Atlas:', error);
+  }
+};
+```
+
+The connection is invoked in `src/index.js:11`:
+
+```javascript src/index.js
+import { connectDB } from './database/connection.js';
+
+// Connect to MongoDB
+connectDB();
+```
+
+## Connection Events
+
+The API monitors three key connection events:
+
+### Connected Event
+Fired when successfully connected to MongoDB Atlas. Logs confirmation message.
+
+### Error Event
+Fired when a connection error occurs. Logs error details for debugging.
+
+### Disconnected Event
+Fired when the connection to MongoDB is lost. Logs disconnection notice.
+
+<Tip>
+  Monitor these events in your application logs to track database connection health.
+</Tip>
+
+## Troubleshooting
+
+### Connection Timeout
+
+**Problem:** Application hangs when trying to connect to MongoDB.
+
+**Solutions:**
+- Verify your IP address is whitelisted in MongoDB Atlas Network Access
+- Check that your connection string is correct
+- Ensure your MongoDB Atlas cluster is running
+- Verify network connectivity
+
+### Authentication Failed
+
+**Problem:** Error message: "Authentication failed"
+
+**Solutions:**
+- Double-check username and password in connection string
+- Ensure the database user has proper permissions
+- Verify the password doesn't contain special characters that need URL encoding
+- Try resetting the database user password
+
+### MONGO_URI Undefined
+
+**Problem:** Console shows `MONGO_URI: undefined`
+
+**Solutions:**
+- Verify `.env` file exists in project root
+- Check that `dotenv.config()` is called before importing config
+- Ensure `MONGO_URI` is properly set in `.env` file
+- Restart your development server after changing `.env`
+
+### Connection String Format
+
+**Problem:** Invalid connection string format
+
+**Solutions:**
+- Use `mongodb+srv://` protocol for Atlas connections
+- Ensure no spaces in the connection string
+- URL-encode special characters in username/password
+- Include `retryWrites=true&w=majority` parameters
+
+## Best Practices
+
+<Steps>
+  <Step title="Use Environment Variables">
+    Never hardcode database credentials. Always use environment variables and the `.env` file for local development.
+  </Step>
+
+  <Step title="Connection Pooling">
+    Mongoose automatically manages connection pooling. For high-traffic applications, consider configuring pool size:
+    ```javascript
+    await mongoose.connect(MONGO_URI, {
+      maxPoolSize: 10,
+      minPoolSize: 5
+    });
+    ```
+  </Step>
+
+  <Step title="Graceful Shutdown">
+    Implement graceful shutdown to close database connections properly:
+    ```javascript
+    process.on('SIGINT', async () => {
+      await mongoose.connection.close();
+      process.exit(0);
+    });
+    ```
+  </Step>
+
+  <Step title="Monitor Connection Health">
+    Regularly check connection status and implement reconnection logic for production environments.
+  </Step>
+</Steps>
+
+## Security Considerations
+
+<Warning>
+  Critical security practices for database connections:
+</Warning>
+
+1. **Never commit credentials:** Use `.gitignore` to exclude `.env` files
+2. **Use strong passwords:** Generate complex passwords for database users
+3. **Limit network access:** Only whitelist necessary IP addresses
+4. **Principle of least privilege:** Grant minimal required permissions to database users
+5. **Rotate credentials:** Regularly update database passwords
+6. **Monitor access:** Enable MongoDB Atlas audit logs for production
+
+## Verification
+
+To verify your database connection is working:
+
+1. Start your development server:
+   ```bash
+   npm run dev
+   ```
+
+2. Check console output for:
+   ```
+   MONGO_URI: mongodb+srv://...
+   Connected to MongoDB Atlas
+   ```
+
+3. Test with the health check endpoint:
+   ```bash
+   curl http://localhost:3000/ruta-prueba
+   ```
+
+<Info>
+  If you see "Connected to MongoDB Atlas" in your logs, your database is properly configured!
+</Info>

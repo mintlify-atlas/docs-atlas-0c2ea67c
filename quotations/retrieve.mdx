@@ -1,0 +1,418 @@
+---
+title: 'Retrieve Quotations'
+description: 'Guide for retrieving the list of quotations'
+---
+
+## Endpoint
+
+```
+GET /api/quotations
+```
+
+Retrieves all quotations stored in the database. This endpoint is implemented in `src/controllers/quotationController.js:4`.
+
+## Request
+
+This endpoint does not require any parameters or request body.
+
+### Headers
+
+```
+GET /api/quotations
+```
+
+No authentication or special headers are required based on the current implementation.
+
+## Response
+
+### Success Response (200 OK)
+
+Returns an array of all quotation objects with their complete nested structure.
+
+```json
+[
+  {
+    "_id": "65abc123def456789",
+    "factory": "Construction Co. Factory A",
+    "fix": "FIX-2026-001",
+    "description_quotation": "Residential building foundation work",
+    "subtotal": 25000.00,
+    "unexpected": 1250.00,
+    "iva": 4987.50,
+    "administratitive": 1500.00,
+    "utility": 2500.00,
+    "total_price": 35237.50,
+    "sections": [
+      {
+        "_id": "65abc123def456792",
+        "description_sections": "Foundation and Structural Work",
+        "section_price": 25000.00,
+        "items": [
+          {
+            "_id": "65abc123def456790",
+            "item_name": "Concrete Foundation",
+            "item_description": "High-strength concrete mix for foundation base",
+            "item_total": 15000.00,
+            "quantity": 30,
+            "unity": "m3",
+            "item_value": 500.00
+          },
+          {
+            "_id": "65abc123def456791",
+            "item_name": "Steel Rebar",
+            "item_description": "Grade 60 steel reinforcement bars",
+            "item_total": 10000.00,
+            "quantity": 2000,
+            "unity": "kg",
+            "item_value": 5.00
+          }
+        ]
+      }
+    ],
+    "__v": 0
+  },
+  {
+    "_id": "65abc789def123456",
+    "factory": "MegaBuild Factory",
+    "fix": "FIX-2026-042",
+    "description_quotation": "Complete office building renovation - 3 floors",
+    "subtotal": 120000.00,
+    "unexpected": 6000.00,
+    "iva": 23940.00,
+    "administratitive": 7200.00,
+    "utility": 12000.00,
+    "total_price": 169140.00,
+    "sections": [
+      {
+        "_id": "65abc789def123457",
+        "description_sections": "Structural Repairs",
+        "section_price": 45000.00,
+        "items": [
+          {
+            "_id": "65abc789def123458",
+            "item_name": "Column Reinforcement",
+            "item_description": "Carbon fiber wrapping for column strengthening",
+            "item_total": 18000.00,
+            "quantity": 12,
+            "unity": "units",
+            "item_value": 1500.00
+          },
+          {
+            "_id": "65abc789def123459",
+            "item_name": "Beam Repair",
+            "item_description": "Concrete beam crack repair and reinforcement",
+            "item_total": 15000.00,
+            "quantity": 25,
+            "unity": "meters",
+            "item_value": 600.00
+          }
+        ]
+      },
+      {
+        "_id": "65abc789def123460",
+        "description_sections": "Electrical Systems",
+        "section_price": 35000.00,
+        "items": [
+          {
+            "_id": "65abc789def123461",
+            "item_name": "Main Electrical Panel",
+            "item_description": "400A main distribution panel with breakers",
+            "item_total": 8000.00,
+            "quantity": 1,
+            "unity": "unit",
+            "item_value": 8000.00
+          },
+          {
+            "_id": "65abc789def123462",
+            "item_name": "Commercial Wiring",
+            "item_description": "12 AWG copper wiring for outlets and lighting",
+            "item_total": 15000.00,
+            "quantity": 1500,
+            "unity": "meters",
+            "item_value": 10.00
+          }
+        ]
+      }
+    ],
+    "__v": 0
+  }
+]
+```
+
+### Empty Response
+
+If no quotations exist in the database, an empty array is returned:
+
+```json
+[]
+```
+
+### Error Response (500 Internal Server Error)
+
+```json
+{
+  "message": "Error al obtener cotizaciones",
+  "error": "[Error details]"
+}
+```
+
+## Implementation Details
+
+The controller uses Mongoose's `find()` method without any filters at `src/controllers/quotationController.js:6`:
+
+```javascript
+const getQuotations = async (req, res) => {
+  try {
+    const quotations = await Quotation.find();
+    res.json(quotations);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener cotizaciones', error });
+  }
+};
+```
+
+<Note>
+  This endpoint returns ALL quotations in the database without pagination or filtering. For large datasets, consider implementing pagination using the `mongoose-paginate-v2` plugin that's already included in the model at `src/models/quotation.js:36`.
+</Note>
+
+## Response Structure
+
+Each quotation in the response array contains:
+
+<Accordion title="Root Level Fields">
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `_id` | String | MongoDB document ID (auto-generated) |
+| `factory` | String | Factory or project identifier |
+| `fix` | String | Fix reference number |
+| `description_quotation` | String | Overall quotation description |
+| `subtotal` | Number | Subtotal before additional costs |
+| `unexpected` | Number | Unexpected costs or contingency |
+| `iva` | Number | VAT/IVA tax amount |
+| `administratitive` | Number | Administrative costs |
+| `utility` | Number | Utility or profit margin |
+| `total_price` | Number | Final total price |
+| `sections` | Array | Array of section objects |
+| `__v` | Number | MongoDB version key |
+
+</Accordion>
+
+<Accordion title="Nested Section Fields">
+
+Each section object contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `_id` | String | Section ID (auto-generated) |
+| `description_sections` | String | Description of the section |
+| `section_price` | Number | Total price for this section |
+| `items` | Array | Array of item objects |
+
+</Accordion>
+
+<Accordion title="Nested Item Fields">
+
+Each item object contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `_id` | String | Item ID (auto-generated) |
+| `item_name` | String | Name of the item |
+| `item_description` | String | Detailed item description |
+| `item_total` | Number | Total cost for this item |
+| `quantity` | Number | Quantity of items |
+| `unity` | String | Unit of measurement |
+| `item_value` | Number | Unit price per item |
+
+</Accordion>
+
+## Usage Examples
+
+### JavaScript Fetch API
+
+```javascript
+const getQuotations = async () => {
+  try {
+    const response = await fetch('https://api.example.com/api/quotations', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const quotations = await response.json();
+    console.log(`Retrieved ${quotations.length} quotations`);
+    
+    return quotations;
+  } catch (error) {
+    console.error('Error fetching quotations:', error);
+    throw error;
+  }
+};
+
+// Example: Process quotations
+getQuotations().then(quotations => {
+  quotations.forEach(quotation => {
+    console.log(`Quotation ${quotation.fix}:`);
+    console.log(`  Factory: ${quotation.factory}`);
+    console.log(`  Total: $${quotation.total_price}`);
+    console.log(`  Sections: ${quotation.sections.length}`);
+    
+    quotation.sections.forEach(section => {
+      console.log(`    - ${section.description_sections}: $${section.section_price}`);
+      console.log(`      Items: ${section.items.length}`);
+    });
+  });
+});
+```
+
+### Using Axios
+
+```javascript
+import axios from 'axios';
+
+const fetchQuotations = async () => {
+  try {
+    const response = await axios.get('https://api.example.com/api/quotations');
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      // Server responded with error status
+      console.error('Error response:', error.response.data);
+      console.error('Status:', error.response.status);
+    } else if (error.request) {
+      // Request made but no response
+      console.error('No response received:', error.request);
+    } else {
+      // Error setting up request
+      console.error('Error:', error.message);
+    }
+    throw error;
+  }
+};
+```
+
+### Using cURL
+
+```bash
+curl -X GET https://api.example.com/api/quotations \
+  -H "Content-Type: application/json"
+```
+
+### Using cURL with Pretty Print
+
+```bash
+curl -X GET https://api.example.com/api/quotations \
+  -H "Content-Type: application/json" | json_pp
+```
+
+## Working with Response Data
+
+### Filtering Quotations by Factory
+
+```javascript
+const quotations = await getQuotations();
+
+const factoryQuotations = quotations.filter(
+  q => q.factory === "Construction Co. Factory A"
+);
+
+console.log(`Found ${factoryQuotations.length} quotations for Factory A`);
+```
+
+### Calculating Total Value
+
+```javascript
+const quotations = await getQuotations();
+
+const totalValue = quotations.reduce(
+  (sum, quotation) => sum + quotation.total_price,
+  0
+);
+
+console.log(`Total value of all quotations: $${totalValue.toFixed(2)}`);
+```
+
+### Extracting All Items
+
+```javascript
+const quotations = await getQuotations();
+
+const allItems = quotations.flatMap(quotation =>
+  quotation.sections.flatMap(section =>
+    section.items.map(item => ({
+      quotationId: quotation._id,
+      quotationFix: quotation.fix,
+      section: section.description_sections,
+      itemName: item.item_name,
+      quantity: item.quantity,
+      unity: item.unity,
+      total: item.item_total
+    }))
+  )
+);
+
+console.log(`Total items across all quotations: ${allItems.length}`);
+```
+
+## Performance Considerations
+
+<Warning>
+  This endpoint retrieves ALL quotations without pagination. As your database grows, this could lead to:
+  - Large response payloads
+  - Increased memory usage
+  - Slower response times
+  - Higher bandwidth consumption
+</Warning>
+
+<Note>
+  The Quotation model includes `mongoose-paginate-v2` plugin. Consider implementing pagination for production use:
+  
+  ```javascript
+  const options = {
+    page: 1,
+    limit: 10,
+    sort: { createdAt: -1 }
+  };
+  
+  const quotations = await Quotation.paginate({}, options);
+  ```
+</Note>
+
+## Future Enhancements
+
+Potential improvements to consider:
+
+<Steps>
+  <Step title="Add pagination">
+    Implement page-based retrieval using the existing mongoose-paginate-v2 plugin
+  </Step>
+  <Step title="Add filtering">
+    Allow filtering by factory, fix, date range, or price range
+  </Step>
+  <Step title="Add sorting">
+    Enable sorting by total_price, creation date, or other fields
+  </Step>
+  <Step title="Add field selection">
+    Allow clients to specify which fields to return (e.g., exclude sections for list views)
+  </Step>
+  <Step title="Add search">
+    Implement text search across description fields
+  </Step>
+</Steps>
+
+## Related Endpoints
+
+<CardGroup cols={2}>
+  <Card title="Create Quotation" icon="plus" href="/quotations/create">
+    Learn how to create a new quotation
+  </Card>
+  <Card title="Quotations Overview" icon="book" href="/quotations/overview">
+    Understand the quotation data structure
+  </Card>
+</CardGroup>

@@ -1,0 +1,240 @@
+---
+title: 'User Registration'
+description: 'Register new users in the Construction Backend API'
+---
+
+## Overview
+
+The user registration endpoint allows new users to create accounts in the system. All passwords are securely hashed using bcrypt before storage.
+
+## Endpoint
+
+```
+POST /register
+```
+
+## Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `document` | string | Yes | User's identification document |
+| `email` | string | Yes | User's email address (must be unique) |
+| `password` | string | Yes | User's password (will be hashed) |
+| `name` | string | Yes | User's first name |
+| `last_name` | string | Yes | User's last name |
+| `cellphone` | string | Yes | User's phone number |
+| `user_type` | string | Yes | User type or role |
+
+<Warning>
+  Both `email` and `document` must be unique in the system. Registration will fail if either already exists.
+</Warning>
+
+## Implementation Details
+
+### Password Hashing
+
+The system uses bcrypt to hash passwords before storage:
+
+```javascript userController.js:22
+const hashedPassword = await bcrypt.hash(password, 10);
+```
+
+<Info>
+  The bcrypt salt round is set to 10, providing a strong balance between security and performance.
+</Info>
+
+### Validation Process
+
+<Steps>
+  <Step title="Required Fields Check">
+    The system validates that email and password are provided.
+    
+    ```javascript userController.js:8-10
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email y contraseña son obligatorios' });
+    }
+    ```
+  </Step>
+  
+  <Step title="Email Uniqueness">
+    Check if the email is already registered in the system.
+    
+    ```javascript userController.js:12-15
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'El correo electrónico ya está registrado' });
+    }
+    ```
+  </Step>
+  
+  <Step title="Document Uniqueness">
+    Verify that the document number is not already in use.
+    
+    ```javascript userController.js:17-20
+    const existingDocument = await User.findOne({ document });
+    if (existingDocument) {
+      return res.status(400).json({ message: 'La cédula ya está registrada' });
+    }
+    ```
+  </Step>
+  
+  <Step title="User Creation">
+    Create and save the new user with hashed password.
+    
+    ```javascript userController.js:24-34
+    const newUser = new User({
+      document,
+      email,
+      password: hashedPassword,
+      name,
+      last_name,
+      cellphone,
+      user_type,
+    });
+    
+    await newUser.save();
+    ```
+  </Step>
+</Steps>
+
+## Examples
+
+<CodeGroup>
+
+```javascript JavaScript (Fetch)
+const response = await fetch('http://localhost:3000/register', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    document: '1234567890',
+    email: 'john.doe@example.com',
+    password: 'SecurePassword123!',
+    name: 'John',
+    last_name: 'Doe',
+    cellphone: '+1234567890',
+    user_type: 'contractor'
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python Python (Requests)
+import requests
+
+url = 'http://localhost:3000/register'
+payload = {
+    'document': '1234567890',
+    'email': 'john.doe@example.com',
+    'password': 'SecurePassword123!',
+    'name': 'John',
+    'last_name': 'Doe',
+    'cellphone': '+1234567890',
+    'user_type': 'contractor'
+}
+
+response = requests.post(url, json=payload)
+print(response.json())
+```
+
+```bash cURL
+curl -X POST http://localhost:3000/register \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "document": "1234567890",
+    "email": "john.doe@example.com",
+    "password": "SecurePassword123!",
+    "name": "John",
+    "last_name": "Doe",
+    "cellphone": "+1234567890",
+    "user_type": "contractor"
+  }'
+```
+
+</CodeGroup>
+
+## Response
+
+### Success Response (201 Created)
+
+```json
+{
+  "message": "Usuario registrado correctamente",
+  "user": {
+    "document": "1234567890",
+    "email": "john.doe@example.com",
+    "password": "$2a$10$XxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXx",
+    "name": "John",
+    "last_name": "Doe",
+    "cellphone": "+1234567890",
+    "user_type": "contractor",
+    "_id": "507f1f77bcf86cd799439011",
+    "__v": 0
+  }
+}
+```
+
+<Note>
+  The password in the response is the hashed version. However, in production, it's recommended to exclude the password field from API responses entirely.
+</Note>
+
+## Error Responses
+
+### Missing Required Fields (400 Bad Request)
+
+```json
+{
+  "message": "Email y contraseña son obligatorios"
+}
+```
+
+### Duplicate Email (400 Bad Request)
+
+```json
+{
+  "message": "El correo electrónico ya está registrado"
+}
+```
+
+### Duplicate Document (400 Bad Request)
+
+```json
+{
+  "message": "La cédula ya está registrada"
+}
+```
+
+### Server Error (500 Internal Server Error)
+
+```json
+{
+  "message": "Error al registrar el usuario",
+  "error": "Detailed error message"
+}
+```
+
+## Edge Cases
+
+<Warning>
+  **Important edge cases to handle:**
+  
+  - **Empty strings**: While fields may be provided, empty strings will pass the basic validation but may cause issues. Consider adding length validation.
+  - **Invalid email format**: The current implementation doesn't validate email format. Consider adding email validation.
+  - **Weak passwords**: No password strength requirements are enforced. Consider implementing password policies.
+  - **Document format**: No validation on document format or length.
+</Warning>
+
+## Best Practices
+
+1. **Client-side validation**: Validate input on the client side before sending requests
+2. **Password requirements**: Implement minimum password length and complexity rules
+3. **Email verification**: Consider adding email verification flow after registration
+4. **Rate limiting**: Implement rate limiting to prevent abuse
+5. **Sanitization**: Sanitize user input to prevent injection attacks
+
+## Related Endpoints
+
+- [User Login](/auth/login) - Authenticate registered users

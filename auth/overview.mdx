@@ -1,0 +1,92 @@
+---
+title: 'Authentication Overview'
+description: 'Understand the authentication system in the Construction Backend API'
+---
+
+## Introduction
+
+The Construction Backend API uses a secure authentication system based on email and password credentials. User passwords are hashed using bcrypt before storage to ensure maximum security.
+
+## Key Concepts
+
+### User Model Schema
+
+The User model consists of the following fields:
+
+| Field | Type | Required | Unique | Description |
+|-------|------|----------|--------|-------------|
+| `document` | String | Yes | Yes | User's identification document (e.g., national ID) |
+| `email` | String | Yes | Yes | User's email address |
+| `password` | String | Yes | No | Hashed password (bcrypt) |
+| `name` | String | Yes | No | User's first name |
+| `last_name` | String | Yes | No | User's last name |
+| `cellphone` | String | Yes | No | User's phone number |
+| `user_type` | String | Yes | No | Type/role of user in the system |
+
+### Password Security
+
+<Warning>
+  Passwords are **never stored in plain text**. The system uses bcrypt with a salt round of 10 to hash all passwords before database storage.
+</Warning>
+
+```javascript
+// Password hashing implementation
+const hashedPassword = await bcrypt.hash(password, 10);
+```
+
+### Authentication Flow
+
+<Steps>
+  <Step title="User Registration">
+    New users register with their credentials and personal information. The system validates uniqueness of email and document.
+  </Step>
+  
+  <Step title="Password Hashing">
+    The plain-text password is hashed using bcrypt before being stored in the database.
+  </Step>
+  
+  <Step title="User Login">
+    Users authenticate by providing email and password. The system compares the hashed password using bcrypt.
+  </Step>
+  
+  <Step title="Session Response">
+    Upon successful authentication, user information (excluding password) is returned to the client.
+  </Step>
+</Steps>
+
+## Security Features
+
+<Info>
+  The authentication system includes the following security measures:
+  - Bcrypt password hashing (salt rounds: 10)
+  - Email uniqueness validation
+  - Document uniqueness validation
+  - Secure password comparison
+  - No password exposure in API responses
+</Info>
+
+## Available Endpoints
+
+- **POST /register** - Register a new user account
+- **POST /login** - Authenticate and login existing users
+
+## Error Handling
+
+The API returns appropriate HTTP status codes:
+
+- `200` - Successful login
+- `201` - Successful registration
+- `400` - Bad request (missing fields, duplicate email/document)
+- `401` - Unauthorized (invalid credentials, user not found)
+- `500` - Server error
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="User Registration" icon="user-plus" href="/auth/register">
+    Learn how to register new users
+  </Card>
+  <Card title="User Login" icon="right-to-bracket" href="/auth/login">
+    Learn how to authenticate users
+  </Card>
+</CardGroup>

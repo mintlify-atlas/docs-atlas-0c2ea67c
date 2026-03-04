@@ -1,0 +1,298 @@
+---
+title: 'User Login'
+description: 'Authenticate users in the Construction Backend API'
+---
+
+## Overview
+
+The user login endpoint authenticates existing users by validating their email and password credentials. Passwords are securely compared using bcrypt.
+
+## Endpoint
+
+```
+POST /login
+```
+
+## Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `email` | string | Yes | User's registered email address |
+| `password` | string | Yes | User's password (plain text) |
+
+<Info>
+  Only email and password are required for login. The password is compared against the hashed version stored in the database.
+</Info>
+
+## Implementation Details
+
+### Password Verification
+
+The system uses bcrypt to securely compare the provided password with the stored hash:
+
+```javascript userController.js:56-59
+const isPasswordValid = await bcrypt.compare(password, user.password);
+if (!isPasswordValid) {
+  return res.status(401).json({ message: 'Credenciales inválidas' });
+}
+```
+
+<Warning>
+  Never compare passwords using simple string equality. Always use bcrypt.compare() to validate hashed passwords.
+</Warning>
+
+### Authentication Process
+
+<Steps>
+  <Step title="Required Fields Check">
+    Validate that both email and password are provided.
+    
+    ```javascript userController.js:47-49
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email y contraseña son obligatorios' });
+    }
+    ```
+  </Step>
+  
+  <Step title="User Lookup">
+    Find the user by email address.
+    
+    ```javascript userController.js:51-54
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: 'Usuario no encontrado con el email proporcionado' });
+    }
+    ```
+  </Step>
+  
+  <Step title="Password Verification">
+    Use bcrypt to compare the provided password with the stored hash.
+    
+    ```javascript userController.js:56-59
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Credenciales inválidas' });
+    }
+    ```
+  </Step>
+  
+  <Step title="Response Generation">
+    Return user information excluding the password.
+    
+    ```javascript userController.js:61-70
+    const userInfo = {
+      document: user.document,
+      email: user.email,
+      name: user.name,
+      last_name: user.last_name,
+      cellphone: user.cellphone,
+      user_type: user.user_type,
+    };
+    
+    res.status(200).json({ message: 'Usuario logueado correctamente', user: userInfo });
+    ```
+  </Step>
+</Steps>
+
+## Examples
+
+<CodeGroup>
+
+```javascript JavaScript (Fetch)
+const response = await fetch('http://localhost:3000/login', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    email: 'john.doe@example.com',
+    password: 'SecurePassword123!'
+  })
+});
+
+const data = await response.json();
+console.log(data);
+
+// Store user information for subsequent requests
+if (response.ok) {
+  localStorage.setItem('user', JSON.stringify(data.user));
+}
+```
+
+```python Python (Requests)
+import requests
+
+url = 'http://localhost:3000/login'
+payload = {
+    'email': 'john.doe@example.com',
+    'password': 'SecurePassword123!'
+}
+
+response = requests.post(url, json=payload)
+data = response.json()
+
+if response.status_code == 200:
+    print('Login successful!')
+    print(f"Welcome, {data['user']['name']}!")
+else:
+    print(f"Login failed: {data['message']}")
+```
+
+```bash cURL
+curl -X POST http://localhost:3000/login \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "email": "john.doe@example.com",
+    "password": "SecurePassword123!"
+  }'
+```
+
+</CodeGroup>
+
+## Response
+
+### Success Response (200 OK)
+
+```json
+{
+  "message": "Usuario logueado correctamente",
+  "user": {
+    "document": "1234567890",
+    "email": "john.doe@example.com",
+    "name": "John",
+    "last_name": "Doe",
+    "cellphone": "+1234567890",
+    "user_type": "contractor"
+  }
+}
+```
+
+<Note>
+  The password field is explicitly excluded from the response for security reasons. Only safe user information is returned.
+</Note>
+
+## Error Responses
+
+### Missing Required Fields (400 Bad Request)
+
+```json
+{
+  "message": "Email y contraseña son obligatorios"
+}
+```
+
+**Cause**: Either email or password field is missing from the request body.
+
+### User Not Found (401 Unauthorized)
+
+```json
+{
+  "message": "Usuario no encontrado con el email proporcionado"
+}
+```
+
+**Cause**: No user exists with the provided email address.
+
+### Invalid Credentials (401 Unauthorized)
+
+```json
+{
+  "message": "Credenciales inválidas"
+}
+```
+
+**Cause**: The password doesn't match the stored hash for the user.
+
+### Server Error (500 Internal Server Error)
+
+```json
+{
+  "message": "Error al iniciar sesión",
+  "error": {}
+}
+```
+
+**Cause**: An unexpected server error occurred during the login process.
+
+## Security Considerations
+
+<Warning>
+  **Important security considerations:**
+  
+  1. **Timing attacks**: The current implementation may be vulnerable to timing attacks. Consider using constant-time comparison.
+  2. **Rate limiting**: Implement rate limiting to prevent brute-force attacks.
+  3. **Account lockout**: Consider locking accounts after multiple failed login attempts.
+  4. **Error messages**: The current error messages reveal whether an email exists in the system. Consider using generic messages.
+</Warning>
+
+## Edge Cases
+
+### Case Sensitivity
+
+```javascript
+// Email lookup is case-sensitive
+const user = await User.findOne({ email });
+```
+
+<Info>
+  Email addresses are case-sensitive in the current implementation. "John@Example.com" and "john@example.com" are treated as different users.
+</Info>
+
+**Recommendation**: Convert emails to lowercase before storing and comparing:
+
+```javascript
+const normalizedEmail = email.toLowerCase();
+const user = await User.findOne({ email: normalizedEmail });
+```
+
+### Empty Password Fields
+
+While the validation checks for missing fields, empty strings will pass the check:
+
+```javascript
+// This passes validation but shouldn't
+{ email: "user@example.com", password: "" }
+```
+
+**Recommendation**: Add length validation:
+
+```javascript
+if (!email || !password || password.length === 0) {
+  return res.status(400).json({ message: 'Email y contraseña son obligatorios' });
+}
+```
+
+### Database Connection Failures
+
+If the database connection fails, a 500 error is returned without specific details:
+
+```javascript userController.js:72-73
+res.status(500).json({ message: 'Error al iniciar sesión', error });
+```
+
+## Best Practices
+
+1. **Session Management**: After successful login, implement JWT tokens or session cookies for subsequent requests
+2. **HTTPS Only**: Always use HTTPS in production to encrypt credentials in transit
+3. **Password Policies**: Enforce strong password requirements during registration
+4. **Multi-Factor Authentication**: Consider adding MFA for enhanced security
+5. **Audit Logging**: Log login attempts for security monitoring
+6. **Token Expiration**: Implement automatic logout after period of inactivity
+
+## Session Management
+
+<Note>
+  The current implementation doesn't include session management or JWT tokens. After successful login, you'll need to implement your own session handling mechanism.
+</Note>
+
+### Recommended Next Steps
+
+1. Implement JWT token generation on successful login
+2. Add authentication middleware to protect routes
+3. Create token refresh mechanism
+4. Implement logout functionality
+
+## Related Endpoints
+
+- [User Registration](/auth/register) - Create new user accounts
+- [Authentication Overview](/auth/overview) - Learn about the authentication system

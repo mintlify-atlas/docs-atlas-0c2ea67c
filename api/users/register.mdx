@@ -1,0 +1,229 @@
+---
+title: "Register User"
+description: "Create a new user account in the Construction Backend API system"
+---
+
+## POST /api/user/register
+
+Registers a new user in the system with their personal information and credentials. All user data is validated before creating the account, and passwords are securely hashed before storage.
+
+### Headers
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+### Request Body
+
+<ParamField body="document" type="string" required>
+  User's identification document number. Must be unique in the system.
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  User's email address. Must be unique in the system and will be used for login.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  User's password. Will be hashed using bcrypt before storage.
+</ParamField>
+
+<ParamField body="name" type="string" required>
+  User's first name.
+</ParamField>
+
+<ParamField body="last_name" type="string" required>
+  User's last name.
+</ParamField>
+
+<ParamField body="cellphone" type="string" required>
+  User's mobile phone number.
+</ParamField>
+
+<ParamField body="user_type" type="string" required>
+  Type of user account (e.g., "admin", "client", "contractor").
+</ParamField>
+
+### Request Example
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.example.com/api/user/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "document": "1234567890",
+    "email": "user@example.com",
+    "password": "securePassword123",
+    "name": "John",
+    "last_name": "Doe",
+    "cellphone": "+57 300 123 4567",
+    "user_type": "client"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.example.com/api/user/register', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    document: '1234567890',
+    email: 'user@example.com',
+    password: 'securePassword123',
+    name: 'John',
+    last_name: 'Doe',
+    cellphone: '+57 300 123 4567',
+    user_type: 'client'
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+url = 'https://api.example.com/api/user/register'
+headers = {'Content-Type': 'application/json'}
+payload = {
+    'document': '1234567890',
+    'email': 'user@example.com',
+    'password': 'securePassword123',
+    'name': 'John',
+    'last_name': 'Doe',
+    'cellphone': '+57 300 123 4567',
+    'user_type': 'client'
+}
+
+response = requests.post(url, json=payload, headers=headers)
+data = response.json()
+```
+
+</CodeGroup>
+
+### Response
+
+<Accordion title="201 - User Created Successfully">
+
+<ResponseField name="message" type="string">
+  Success message confirming user registration.
+</ResponseField>
+
+<ResponseField name="user" type="object">
+  The newly created user object.
+
+  <ResponseField name="user.document" type="string">
+    User's identification document number.
+  </ResponseField>
+
+  <ResponseField name="user.email" type="string">
+    User's email address.
+  </ResponseField>
+
+  <ResponseField name="user.password" type="string">
+    Hashed password (bcrypt).
+  </ResponseField>
+
+  <ResponseField name="user.name" type="string">
+    User's first name.
+  </ResponseField>
+
+  <ResponseField name="user.last_name" type="string">
+    User's last name.
+  </ResponseField>
+
+  <ResponseField name="user.cellphone" type="string">
+    User's mobile phone number.
+  </ResponseField>
+
+  <ResponseField name="user.user_type" type="string">
+    Type of user account.
+  </ResponseField>
+
+  <ResponseField name="user._id" type="string">
+    MongoDB generated user ID.
+  </ResponseField>
+
+</ResponseField>
+
+```json Example Response
+{
+  "message": "Usuario registrado correctamente",
+  "user": {
+    "document": "1234567890",
+    "email": "user@example.com",
+    "password": "$2a$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "name": "John",
+    "last_name": "Doe",
+    "cellphone": "+57 300 123 4567",
+    "user_type": "client",
+    "_id": "507f1f77bcf86cd799439011"
+  }
+}
+```
+
+</Accordion>
+
+<Accordion title="400 - Bad Request">
+
+Returned when validation fails or required fields are missing.
+
+<ResponseField name="message" type="string">
+  Error message describing the validation failure.
+</ResponseField>
+
+```json Missing Required Fields
+{
+  "message": "Email y contraseña son obligatorios"
+}
+```
+
+```json Email Already Registered
+{
+  "message": "El correo electrónico ya está registrado"
+}
+```
+
+```json Document Already Registered
+{
+  "message": "La cédula ya está registrada"
+}
+```
+
+</Accordion>
+
+<Accordion title="500 - Internal Server Error">
+
+Returned when an unexpected server error occurs.
+
+<ResponseField name="message" type="string">
+  Error message.
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Detailed error information.
+</ResponseField>
+
+```json Example Response
+{
+  "message": "Error al registrar el usuario",
+  "error": "Database connection failed"
+}
+```
+
+</Accordion>
+
+### Validation Rules
+
+- **email** and **password** are mandatory fields
+- **document** must be unique across all users
+- **email** must be unique across all users
+- All fields defined in the request body are required
+- Password is hashed using bcrypt with a salt round of 10
+
+### Implementation Reference
+
+The registration endpoint is implemented in:
+- Route: `/home/daytona/workspace/source/src/routes/userRoutes.js:7`
+- Controller: `/home/daytona/workspace/source/src/controllers/userController.js:4`

@@ -1,0 +1,386 @@
+---
+title: 'Deployment Guide'
+description: 'Deploy the Construction Backend API to Vercel with proper configuration'
+---
+
+## Overview
+
+The Construction Backend API is optimized for deployment on Vercel, a serverless platform that provides automatic scaling and global CDN distribution. This guide covers the complete deployment process and configuration.
+
+## Prerequisites
+
+Before deploying, ensure you have:
+
+- A Vercel account ([vercel.com](https://vercel.com))
+- Git repository with your project code
+- MongoDB Atlas cluster configured (see [Database Setup](/guides/database-setup))
+- Vercel CLI installed (optional but recommended)
+
+## Vercel Configuration
+
+The project includes a `vercel.json` configuration file that defines the deployment settings.
+
+### Configuration Breakdown
+
+```json vercel.json
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "src/index.js"
+    }
+  ],
+  "env": {
+    "MONGO_URI": "mongodb+srv://admin:admin123@construction.uhha3.mongodb.net/?retryWrites=true&w=majority&appName=Construction"
+  }
+}
+```
+
+<Warning>
+  **Never commit production credentials to vercel.json!** The `env` section shown above is for reference only. Always use Vercel's environment variable dashboard for sensitive data.
+</Warning>
+
+### Configuration Properties
+
+| Property | Value | Description |
+|----------|-------|-------------|
+| `version` | `2` | Vercel Build API version |
+| `builds.src` | `src/index.js` | Entry point for the application |
+| `builds.use` | `@vercel/node` | Node.js runtime builder |
+| `routes.src` | `/(.*)` | Catch-all route pattern |
+| `routes.dest` | `src/index.js` | Route all requests to main file |
+
+<Info>
+  The `@vercel/node` builder automatically detects Node.js version from `package.json` engines field or uses the latest LTS version.
+</Info>
+
+## Deployment Steps
+
+<Steps>
+  <Step title="Prepare Your Repository">
+    Ensure your code is pushed to a Git repository (GitHub, GitLab, or Bitbucket).
+
+    ```bash
+    git add .
+    git commit -m "Prepare for deployment"
+    git push origin main
+    ```
+
+    <Note>
+      Verify `.env` is in your `.gitignore` to prevent committing sensitive data.
+    </Note>
+  </Step>
+
+  <Step title="Connect to Vercel">
+    ### Using Vercel Dashboard:
+    
+    1. Log in to [vercel.com](https://vercel.com)
+    2. Click "Add New Project"
+    3. Import your Git repository
+    4. Select the repository containing your API
+    5. Click "Import"
+
+    ### Using Vercel CLI:
+    
+    ```bash
+    npm i -g vercel
+    vercel login
+    vercel
+    ```
+
+    Follow the prompts to link your project.
+  </Step>
+
+  <Step title="Configure Environment Variables">
+    In the Vercel dashboard:
+
+    1. Navigate to your project
+    2. Go to "Settings" → "Environment Variables"
+    3. Add the following variables:
+
+    | Name | Value | Environment |
+    |------|-------|-------------|
+    | `MONGO_URI` | Your MongoDB connection string | Production, Preview, Development |
+    | `PORT` | Auto-set by Vercel | Leave empty |
+
+    <Tip>
+      Use different MongoDB databases for Production and Preview environments to keep data separated.
+    </Tip>
+  </Step>
+
+  <Step title="Deploy">
+    ### Automatic Deployment:
+    
+    Vercel automatically deploys on every push to your main branch.
+
+    ```bash
+    git push origin main
+    ```
+
+    ### Manual Deployment:
+    
+    Using Vercel CLI:
+    ```bash
+    vercel --prod
+    ```
+
+    Or click "Deploy" in the Vercel dashboard.
+  </Step>
+
+  <Step title="Verify Deployment">
+    After deployment completes:
+
+    1. Vercel provides a deployment URL (e.g., `https://your-project.vercel.app`)
+    2. Test the health check endpoint:
+       ```bash
+       curl https://your-project.vercel.app/ruta-prueba
+       ```
+    3. Expected response:
+       ```json
+       {"message": "Ruta de prueba"}
+       ```
+
+    <Info>
+      Check the Vercel deployment logs if you encounter issues. Logs are available in the Vercel dashboard under the deployment details.
+    </Info>
+  </Step>
+</Steps>
+
+## Application Structure for Vercel
+
+The API is structured as a serverless function. The main application file exports the Express app:
+
+```javascript src/index.js
+import express from 'express';
+import cors from 'cors';
+import { connectDB } from './database/connection.js';
+
+// Connect to MongoDB
+connectDB();
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.use('/api/user', userRoutes);
+app.use('/api/quotation', quotationRoutes);
+
+// Export for Vercel
+export default app;
+```
+
+<Note>
+  The `export default app` statement is crucial. Vercel uses this export to handle incoming requests.
+</Note>
+
+## Environment-Specific Configuration
+
+### Development
+
+For local development, use:
+
+```bash
+npm run dev
+```
+
+This runs the app with `nodemon` for auto-reloading.
+
+### Production
+
+Vercel automatically runs the production build. Ensure your `package.json` includes:
+
+```json package.json
+{
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  }
+}
+```
+
+## Custom Domain Setup
+
+<Steps>
+  <Step title="Add Domain in Vercel">
+    1. Go to project "Settings" → "Domains"
+    2. Click "Add Domain"
+    3. Enter your domain name
+    4. Click "Add"
+  </Step>
+
+  <Step title="Configure DNS">
+    Vercel provides DNS records to configure:
+
+    **For apex domain (example.com):**
+    ```
+    Type: A
+    Name: @
+    Value: 76.76.21.21
+    ```
+
+    **For subdomain (api.example.com):**
+    ```
+    Type: CNAME
+    Name: api
+    Value: cname.vercel-dns.com
+    ```
+  </Step>
+
+  <Step title="Verify Domain">
+    DNS propagation can take up to 48 hours, but typically completes within a few hours. Vercel automatically provisions SSL certificates once DNS is verified.
+  </Step>
+</Steps>
+
+## Monitoring and Logs
+
+### View Deployment Logs
+
+1. Go to your project in Vercel dashboard
+2. Click on the deployment
+3. View "Build Logs" and "Function Logs"
+
+### Real-time Logs via CLI
+
+```bash
+vercel logs your-project-url
+```
+
+<Tip>
+  Enable "Log Drains" in Vercel settings to send logs to external monitoring services like Datadog or Logtail.
+</Tip>
+
+## Performance Optimization
+
+### Cold Start Mitigation
+
+Serverless functions experience "cold starts" when idle. To minimize impact:
+
+1. **Keep functions warm:** Use a monitoring service to ping your API periodically
+2. **Optimize dependencies:** Remove unused packages to reduce bundle size
+3. **Use connection pooling:** Mongoose handles this automatically
+
+### Response Caching
+
+For cacheable endpoints, add cache headers:
+
+```javascript
+app.get('/api/quotation', async (req, res) => {
+  res.set('Cache-Control', 's-maxage=60, stale-while-revalidate');
+  // ... endpoint logic
+});
+```
+
+## Troubleshooting
+
+### Build Failures
+
+**Problem:** Build fails during deployment
+
+**Solutions:**
+- Check build logs in Vercel dashboard
+- Verify all dependencies are in `package.json` (not just devDependencies)
+- Ensure Node.js version compatibility
+- Test build locally: `npm install && npm start`
+
+### Function Timeout
+
+**Problem:** "Function Execution Timeout" error
+
+**Solutions:**
+- Optimize database queries
+- Check MongoDB connection stability
+- Verify network access to MongoDB Atlas from Vercel (use 0.0.0.0/0)
+- Consider upgrading Vercel plan for longer timeout limits
+
+### CORS Errors
+
+**Problem:** CORS errors when accessing from frontend
+
+**Solutions:**
+- Verify `cors` middleware is enabled (it is by default in `src/index.js:18`)
+- Configure specific origins if needed:
+  ```javascript
+  app.use(cors({
+    origin: ['https://your-frontend.com']
+  }));
+  ```
+
+### Environment Variables Not Loading
+
+**Problem:** Environment variables are undefined
+
+**Solutions:**
+- Verify variables are set in Vercel dashboard
+- Check variable names match exactly (case-sensitive)
+- Redeploy after adding new environment variables
+- Ensure `dotenv.config()` is called in development but not needed in production (Vercel injects variables directly)
+
+### Database Connection Fails
+
+**Problem:** Can't connect to MongoDB from Vercel
+
+**Solutions:**
+- Verify MongoDB Atlas Network Access allows 0.0.0.0/0
+- Check `MONGO_URI` environment variable is set correctly
+- Ensure connection string includes all required parameters
+- Review function logs for specific error messages
+
+## Rollback Deployments
+
+If a deployment causes issues:
+
+1. Go to project in Vercel dashboard
+2. Click "Deployments"
+3. Find the last working deployment
+4. Click "⋯" → "Promote to Production"
+
+<Warning>
+  Rolling back only affects the frontend deployment, not database changes. Plan database migrations carefully.
+</Warning>
+
+## Security Best Practices
+
+<Steps>
+  <Step title="Use Environment Variables">
+    Never hardcode secrets in `vercel.json` or source code. Always use Vercel's environment variable dashboard.
+  </Step>
+
+  <Step title="Enable HTTPS Only">
+    Vercel provides HTTPS by default. Ensure your frontend always uses `https://` URLs.
+  </Step>
+
+  <Step title="Restrict CORS">
+    In production, restrict CORS to specific origins instead of allowing all:
+    ```javascript
+    app.use(cors({
+      origin: process.env.ALLOWED_ORIGINS?.split(',') || '*'
+    }));
+    ```
+  </Step>
+
+  <Step title="Monitor Access">
+    Enable Vercel Web Analytics and review access patterns regularly.
+  </Step>
+</Steps>
+
+## Additional Resources
+
+- [Vercel Documentation](https://vercel.com/docs)
+- [Vercel CLI Reference](https://vercel.com/docs/cli)
+- [Node.js Runtime](https://vercel.com/docs/runtimes/node-js)
+- [Environment Variables](https://vercel.com/docs/environment-variables)
+
+<Info>
+  For questions or issues, contact Vercel support or check the [Vercel community forums](https://github.com/vercel/vercel/discussions).
+</Info>

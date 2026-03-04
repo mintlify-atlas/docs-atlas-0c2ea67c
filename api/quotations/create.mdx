@@ -1,0 +1,487 @@
+---
+title: "Create Quotation"
+description: "Register a new construction quotation with itemized sections and pricing details"
+---
+
+## POST /api/quotation/register/quotation
+
+Creates a new quotation in the system with complete pricing breakdown, sections, and itemized construction details. All required fields are validated before storage.
+
+### Headers
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+### Request Body
+
+<ParamField body="factory" type="string" required>
+  Factory or construction site name/identifier.
+</ParamField>
+
+<ParamField body="fix" type="string" required>
+  Fix or property identifier associated with the quotation.
+</ParamField>
+
+<ParamField body="description_quotation" type="string" required>
+  General description of the entire quotation.
+</ParamField>
+
+<ParamField body="subtotal" type="number" required>
+  Subtotal amount before taxes and additional costs.
+</ParamField>
+
+<ParamField body="unexpected" type="number" required>
+  Unexpected costs or contingency amount.
+</ParamField>
+
+<ParamField body="iva" type="number" required>
+  IVA (Value Added Tax) amount to be applied.
+</ParamField>
+
+<ParamField body="administratitive" type="number" required>
+  Administrative costs.
+</ParamField>
+
+<ParamField body="utility" type="number" required>
+  Utility or profit margin amount.
+</ParamField>
+
+<ParamField body="total_price" type="number" required>
+  Total price including all costs, taxes, and additional charges.
+</ParamField>
+
+<ParamField body="sections" type="array" required>
+  Array of construction sections. Each section contains description, price, and items.
+
+  <ParamField body="sections[].description_sections" type="string" required>
+    Description of the construction section.
+  </ParamField>
+
+  <ParamField body="sections[].section_price" type="number" required>
+    Total price for this section.
+  </ParamField>
+
+  <ParamField body="sections[].items" type="array" required>
+    Array of construction items within the section.
+
+    <ParamField body="sections[].items[].item_name" type="string" required>
+      Name of the construction item.
+    </ParamField>
+
+    <ParamField body="sections[].items[].item_description" type="string" required>
+      Detailed description of the item.
+    </ParamField>
+
+    <ParamField body="sections[].items[].item_total" type="number" required>
+      Total cost for this item (typically quantity × unit value).
+    </ParamField>
+
+    <ParamField body="sections[].items[].quantity" type="number" required>
+      Quantity of items needed.
+    </ParamField>
+
+    <ParamField body="sections[].items[].unity" type="string" required>
+      Unit of measurement (e.g., "m2", "units", "kg", "m3").
+    </ParamField>
+
+    <ParamField body="sections[].items[].item_value" type="number" required>
+      Unit value/price per individual item.
+    </ParamField>
+
+  </ParamField>
+
+</ParamField>
+
+### Request Example
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.example.com/api/quotation/register/quotation \
+  -H "Content-Type: application/json" \
+  -d '{
+    "factory": "Construction Site A",
+    "fix": "Building 1",
+    "description_quotation": "Complete construction quotation for residential building",
+    "subtotal": 50000000,
+    "unexpected": 2500000,
+    "iva": 9500000,
+    "administratitive": 3000000,
+    "utility": 5000000,
+    "total_price": 70000000,
+    "sections": [
+      {
+        "description_sections": "Foundation and Structure",
+        "section_price": 25000000,
+        "items": [
+          {
+            "item_name": "Concrete",
+            "item_description": "High-strength concrete for foundation",
+            "item_total": 15000000,
+            "quantity": 100,
+            "unity": "m3",
+            "item_value": 150000
+          },
+          {
+            "item_name": "Steel Rebar",
+            "item_description": "Reinforcement steel bars",
+            "item_total": 10000000,
+            "quantity": 5000,
+            "unity": "kg",
+            "item_value": 2000
+          }
+        ]
+      },
+      {
+        "description_sections": "Walls and Finishes",
+        "section_price": 25000000,
+        "items": [
+          {
+            "item_name": "Brick",
+            "item_description": "Standard construction brick",
+            "item_total": 12000000,
+            "quantity": 20000,
+            "unity": "units",
+            "item_value": 600
+          }
+        ]
+      }
+    ]
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.example.com/api/quotation/register/quotation', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    factory: 'Construction Site A',
+    fix: 'Building 1',
+    description_quotation: 'Complete construction quotation for residential building',
+    subtotal: 50000000,
+    unexpected: 2500000,
+    iva: 9500000,
+    administratitive: 3000000,
+    utility: 5000000,
+    total_price: 70000000,
+    sections: [
+      {
+        description_sections: 'Foundation and Structure',
+        section_price: 25000000,
+        items: [
+          {
+            item_name: 'Concrete',
+            item_description: 'High-strength concrete for foundation',
+            item_total: 15000000,
+            quantity: 100,
+            unity: 'm3',
+            item_value: 150000
+          },
+          {
+            item_name: 'Steel Rebar',
+            item_description: 'Reinforcement steel bars',
+            item_total: 10000000,
+            quantity: 5000,
+            unity: 'kg',
+            item_value: 2000
+          }
+        ]
+      },
+      {
+        description_sections: 'Walls and Finishes',
+        section_price: 25000000,
+        items: [
+          {
+            item_name: 'Brick',
+            item_description: 'Standard construction brick',
+            item_total: 12000000,
+            quantity: 20000,
+            unity: 'units',
+            item_value: 600
+          }
+        ]
+      }
+    ]
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+url = 'https://api.example.com/api/quotation/register/quotation'
+headers = {'Content-Type': 'application/json'}
+payload = {
+    'factory': 'Construction Site A',
+    'fix': 'Building 1',
+    'description_quotation': 'Complete construction quotation for residential building',
+    'subtotal': 50000000,
+    'unexpected': 2500000,
+    'iva': 9500000,
+    'administratitive': 3000000,
+    'utility': 5000000,
+    'total_price': 70000000,
+    'sections': [
+        {
+            'description_sections': 'Foundation and Structure',
+            'section_price': 25000000,
+            'items': [
+                {
+                    'item_name': 'Concrete',
+                    'item_description': 'High-strength concrete for foundation',
+                    'item_total': 15000000,
+                    'quantity': 100,
+                    'unity': 'm3',
+                    'item_value': 150000
+                },
+                {
+                    'item_name': 'Steel Rebar',
+                    'item_description': 'Reinforcement steel bars',
+                    'item_total': 10000000,
+                    'quantity': 5000,
+                    'unity': 'kg',
+                    'item_value': 2000
+                }
+            ]
+        },
+        {
+            'description_sections': 'Walls and Finishes',
+            'section_price': 25000000,
+            'items': [
+                {
+                    'item_name': 'Brick',
+                    'item_description': 'Standard construction brick',
+                    'item_total': 12000000,
+                    'quantity': 20000,
+                    'unity': 'units',
+                    'item_value': 600
+                }
+            ]
+        }
+    ]
+}
+
+response = requests.post(url, json=payload, headers=headers)
+data = response.json()
+```
+
+</CodeGroup>
+
+### Response
+
+<Accordion title="201 - Quotation Created Successfully">
+
+<ResponseField name="message" type="string">
+  Success message confirming quotation storage.
+</ResponseField>
+
+<ResponseField name="quotation" type="object">
+  The newly created quotation object including MongoDB generated ID.
+
+  <ResponseField name="quotation._id" type="string">
+    MongoDB generated quotation ID.
+  </ResponseField>
+
+  <ResponseField name="quotation.factory" type="string">
+    Factory or construction site name.
+  </ResponseField>
+
+  <ResponseField name="quotation.fix" type="string">
+    Fix or property identifier.
+  </ResponseField>
+
+  <ResponseField name="quotation.description_quotation" type="string">
+    General description of the quotation.
+  </ResponseField>
+
+  <ResponseField name="quotation.subtotal" type="number">
+    Subtotal amount.
+  </ResponseField>
+
+  <ResponseField name="quotation.unexpected" type="number">
+    Unexpected costs.
+  </ResponseField>
+
+  <ResponseField name="quotation.iva" type="number">
+    IVA amount.
+  </ResponseField>
+
+  <ResponseField name="quotation.administratitive" type="number">
+    Administrative costs.
+  </ResponseField>
+
+  <ResponseField name="quotation.utility" type="number">
+    Utility amount.
+  </ResponseField>
+
+  <ResponseField name="quotation.total_price" type="number">
+    Total price.
+  </ResponseField>
+
+  <ResponseField name="quotation.sections" type="array">
+    Array of sections with items.
+  </ResponseField>
+
+</ResponseField>
+
+```json Example Response
+{
+  "message": "Cotización almacenada correctamente",
+  "quotation": {
+    "_id": "507f1f77bcf86cd799439011",
+    "factory": "Construction Site A",
+    "fix": "Building 1",
+    "description_quotation": "Complete construction quotation for residential building",
+    "subtotal": 50000000,
+    "unexpected": 2500000,
+    "iva": 9500000,
+    "administratitive": 3000000,
+    "utility": 5000000,
+    "total_price": 70000000,
+    "sections": [
+      {
+        "description_sections": "Foundation and Structure",
+        "section_price": 25000000,
+        "items": [
+          {
+            "item_name": "Concrete",
+            "item_description": "High-strength concrete for foundation",
+            "item_total": 15000000,
+            "quantity": 100,
+            "unity": "m3",
+            "item_value": 150000
+          },
+          {
+            "item_name": "Steel Rebar",
+            "item_description": "Reinforcement steel bars",
+            "item_total": 10000000,
+            "quantity": 5000,
+            "unity": "kg",
+            "item_value": 2000
+          }
+        ]
+      },
+      {
+        "description_sections": "Walls and Finishes",
+        "section_price": 25000000,
+        "items": [
+          {
+            "item_name": "Brick",
+            "item_description": "Standard construction brick",
+            "item_total": 12000000,
+            "quantity": 20000,
+            "unity": "units",
+            "item_value": 600
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+</Accordion>
+
+<Accordion title="400 - Bad Request">
+
+Returned when the request body is missing required fields or has invalid format.
+
+<ResponseField name="error" type="string">
+  Error message describing the validation failure.
+</ResponseField>
+
+```json Invalid JSON Format
+{
+  "error": "Formato de JSON inválido"
+}
+```
+
+This error is returned when any of the following conditions are not met:
+- `factory` field is missing or empty
+- `fix` field is missing or empty
+- `description_quotation` field is missing or empty
+- `subtotal` is undefined
+- `unexpected` is undefined
+- `iva` is undefined
+- `administratitive` is undefined
+- `utility` is undefined
+- `total_price` is undefined
+- `sections` is not an array or is missing
+
+</Accordion>
+
+<Accordion title="500 - Internal Server Error">
+
+Returned when an unexpected server error occurs during quotation storage.
+
+<ResponseField name="message" type="string">
+  Error message.
+</ResponseField>
+
+<ResponseField name="error" type="object">
+  Error details object.
+</ResponseField>
+
+```json Example Response
+{
+  "message": "Error al almacenar la cotización",
+  "error": {}
+}
+```
+
+</Accordion>
+
+### Validation Rules
+
+The endpoint performs strict validation on the request body:
+
+1. **Required String Fields**: `factory`, `fix`, `description_quotation` must be present and non-empty
+2. **Required Number Fields**: All pricing fields must be defined (can be 0, but not undefined):
+   - `subtotal`
+   - `unexpected`
+   - `iva`
+   - `administratitive`
+   - `utility`
+   - `total_price`
+3. **Sections Array**: Must be a valid array (can be empty, but must be an array)
+4. **Section Structure**: Each section must contain:
+   - `description_sections` (string, required)
+   - `section_price` (number, required)
+   - `items` (array, required)
+5. **Item Structure**: Each item must contain:
+   - `item_name` (string, required)
+   - `item_description` (string, required)
+   - `item_total` (number, required)
+   - `quantity` (number, required)
+   - `unity` (string, required)
+   - `item_value` (number, required)
+
+### Pricing Structure
+
+The quotation follows this pricing hierarchy:
+
+```
+Subtotal (sum of all section prices)
++ Unexpected costs
++ Administrative costs
++ Utility/Profit margin
++ IVA (tax)
+= Total Price
+```
+
+Each section contains multiple items, where:
+```
+Item Total = Quantity × Item Value
+Section Price = Sum of all item totals in that section
+```
+
+### Implementation Reference
+
+The create quotation endpoint is implemented in:
+- Route: `/home/daytona/workspace/source/src/routes/quotationRoutes.js:9`
+- Controller: `/home/daytona/workspace/source/src/controllers/quotationController.js:14`
